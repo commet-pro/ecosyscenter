@@ -1,0 +1,12 @@
+# A chave privada NUNCA entra aqui. Quem emite carrega o arquivo na hora.
+chave-emissao.json
+chave-privada*
+chaves/
+*.pem
+*.key
+
+# capturas e rascunhos do build
+.ref/
+__pycache__/
+*.pyc
+.DS_Store

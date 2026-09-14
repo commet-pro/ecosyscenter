@@ -1,0 +1,152 @@
+@font-face{font-family:ArchivoCond;font-weight:700;font-display:swap;src:url(fontes/archivocond-bold.woff2) format('woff2')}
+@font-face{font-family:Inter;font-weight:400;font-display:swap;src:url(fontes/inter-400.woff2) format('woff2')}
+@font-face{font-family:Inter;font-weight:500;font-display:swap;src:url(fontes/inter-500.woff2) format('woff2')}
+@font-face{font-family:Inter;font-weight:600;font-display:swap;src:url(fontes/inter-600.woff2) format('woff2')}
+:root{--navy:#122B4A;--steel:#2E6DA4;--red:#C8102E;--grey:#E4E7EB;--white:#F4F4F4}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--navy);
+  background:var(--grey);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+
+/* ---------------------------------------------------------- cabeçalho */
+header{background:var(--navy);color:#fff;padding:0 26px;height:60px;display:flex;
+  align-items:center;gap:16px}
+header img.logo{height:24px;width:auto;display:block}
+header .sep{width:1px;height:22px;background:rgba(255,255,255,.22)}
+header .mod{font-family:ArchivoCond;font-weight:700;font-size:13px;
+  letter-spacing:.18em;text-transform:uppercase;opacity:.85}
+header .voltar{margin-left:auto;font-size:11px;letter-spacing:.08em;
+  color:rgba(255,255,255,.75);text-decoration:none;padding:8px}
+header .voltar:hover{color:#fff}
+@media(max-width:560px){
+  header{padding:0 16px;gap:10px}
+  header .mod{font-size:11px;letter-spacing:.12em}
+}
+
+/* ------------------------------------------------------------- portal */
+.portal{max-width:1060px;margin:0 auto;padding:56px 26px 48px}
+.portal .capa{max-width:64ch}
+.portal h1{font-family:ArchivoCond;font-weight:700;font-size:clamp(32px,6vw,46px);
+  line-height:1;letter-spacing:.005em;text-transform:uppercase;margin:0 0 12px}
+.portal .sub{font-size:15px;line-height:1.65;color:#5c6672;margin:0}
+.portal .num{display:flex;gap:26px;flex-wrap:wrap;margin:30px 0 0;
+  padding-top:22px;border-top:1px solid #d3d8de}
+.portal .num div{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a929c}
+.portal .num b{display:block;font-family:ArchivoCond;font-weight:700;font-size:26px;
+  letter-spacing:0;color:var(--navy);margin-bottom:2px}
+
+.cat{margin-top:52px}
+.cat-cab{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+  padding-bottom:10px;border-bottom:2px solid var(--navy)}
+.cat-cab h2{font-family:ArchivoCond;font-weight:700;font-size:22px;margin:0;
+  text-transform:uppercase;letter-spacing:.03em}
+.cat-cab .tag{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:600;padding:3px 8px;background:var(--navy);color:#fff}
+.cat-cab .tag.soon{background:#fff;color:#8a929c;border:1px solid #c9cfd6}
+.cat-cab p{margin:0;font-size:12px;line-height:1.55;color:#6b7480;flex:1 1 260px}
+
+.mods{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));
+  gap:16px;margin-top:20px}
+.card{background:#fff;border:1px solid #d3d8de;padding:20px;display:flex;
+  flex-direction:column;gap:9px;text-decoration:none;color:var(--navy);
+  transition:.15s;min-height:152px}
+a.card:hover{border-color:var(--navy);transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(18,43,74,.10)}
+.card .ic{width:30px;height:30px;color:var(--steel)}
+.card h3{font-family:ArchivoCond;font-weight:700;font-size:18px;margin:0;
+  text-transform:uppercase;letter-spacing:.02em}
+.card p{margin:0;font-size:12px;line-height:1.55;color:#6b7480}
+.card .abrir{margin-top:auto;font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--red);font-weight:600}
+.card.soon{background:transparent;border-style:dashed;border-color:#c9cfd6}
+.card.soon h3,.card.soon .ic{color:#9aa3ad}
+.card.soon .abrir{color:#9aa3ad}
+
+.rodape{margin-top:56px;padding-top:20px;border-top:1px solid #d3d8de;
+  font-size:11px;line-height:1.7;color:#8a929c;max-width:70ch}
+.rodape b{color:#6b7480}
+
+/* -------------------------------------------------------- painel/peça */
+main{display:grid;grid-template-columns:344px 1fr;gap:26px;padding:26px;
+  align-items:start;max-width:1320px}
+@media(max-width:940px){main{grid-template-columns:1fr}}
+.panel{background:#fff;border:1px solid #d3d8de;padding:20px}
+.panel h2{font-family:ArchivoCond;font-weight:700;font-size:13px;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--steel);
+  margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--grey)}
+.panel h2.mt{margin-top:22px}
+label{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:500;color:var(--steel);margin:12px 0 4px}
+input,select{width:100%;padding:8px 10px;border:1px solid #c9cfd6;font:inherit;
+  font-size:13px;color:var(--navy);background:#fff}
+input:focus,select:focus{outline:2px solid var(--steel);outline-offset:-1px}
+input[type=file]{padding:6px;font-size:11px}
+.fixo{background:var(--grey);color:#6b7480;font-size:12px;padding:8px 10px;
+  border:1px dashed #c9cfd6;display:flex;justify-content:space-between;gap:8px}
+.fixo b{color:var(--navy);font-weight:600}
+.row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+button{font:inherit;font-size:12px;font-weight:600;letter-spacing:.05em;
+  padding:10px 14px;border:0;cursor:pointer;background:var(--navy);color:#fff}
+button.ghost{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+button.red{background:var(--red)}
+button:hover{opacity:.88}
+button[disabled]{opacity:.4;cursor:not-allowed}
+.seg{display:flex;margin-top:16px;border:1px solid var(--navy)}
+.seg button{flex:1;background:#fff;color:var(--navy);border:0;font-size:11px;padding:9px 6px}
+.seg button.on{background:var(--navy);color:#fff}
+.hint{font-size:11px;line-height:1.6;color:#6b7480;margin:14px 0 0}
+.hint b{color:var(--navy)}
+.lista{margin-top:6px;font-size:12px}
+.lista div{display:flex;justify-content:space-between;gap:8px;padding:6px 0;
+  border-bottom:1px solid var(--grey)}
+.lista a{color:var(--red);cursor:pointer;font-weight:600}
+.stage{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+.cap{font-family:ArchivoCond;font-weight:700;font-size:11px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--steel);margin-bottom:6px}
+.peca{display:block;overflow:hidden;box-shadow:0 2px 14px rgba(18,43,74,.18);
+  max-width:100%}
+.peca svg{display:block;width:100%;height:100%}
+.safe{display:none}
+.guias .safe{display:block}
+#print{position:absolute;left:-99999px;top:0;width:210mm}
+
+/* ------------------------------------------------------------- chave */
+.chave{border:1px solid #c9cfd6;padding:12px;margin-top:6px;font-size:11px;
+  line-height:1.6;color:#6b7480;background:var(--grey)}
+.chave .estado{display:flex;align-items:center;gap:7px;font-weight:600;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.chave .estado i{width:8px;height:8px;border-radius:50%;background:var(--red);
+  display:block;flex:none}
+.chave.ok .estado{color:#1f7a4d}
+.chave.ok .estado i{background:#1f7a4d}
+.chave.erro .estado{color:var(--red)}
+
+/* --------------------------------------------------------- validador */
+.livre{max-width:620px;margin:0 auto;padding:26px}
+.res{margin-top:18px}
+.res .cx{border:1px solid var(--navy);border-top:4px solid var(--navy);padding:18px;
+  background:#fff}
+.res .tit{display:flex;align-items:center;gap:8px;font-family:ArchivoCond;
+  font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase}
+.res .nome{font-family:ArchivoCond;font-weight:700;font-size:28px;line-height:1.05;
+  text-transform:uppercase;margin:12px 0 3px}
+.res .cargo{font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--steel);font-weight:500}
+.res .meta{font-size:11px;color:#6b7480;margin-top:11px;line-height:1.6}
+video{width:100%;display:block;background:#000}
+
+@media print{
+  html,body{background:#fff;margin:0;padding:0;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header,main,.portal,.livre{display:none!important}
+  #print{position:static;left:auto;top:auto;width:auto;margin:0;padding:0;line-height:0}
+  .safe{display:none!important}
+  .peca{box-shadow:none!important}
+  #print.m-unit .peca+.peca{break-before:page}
+  #print.m-unit .peca{break-inside:avoid}
+  #print.m-a4 .folha{position:relative;width:210mm;height:297mm;overflow:hidden;
+    break-after:page}
+  #print.m-a4 .folha:last-child{break-after:auto}
+  #print.m-a4 .grade{position:absolute;display:grid}
+  #print.m-a4 .marcas{position:absolute;inset:0;width:210mm;height:297mm}
+}

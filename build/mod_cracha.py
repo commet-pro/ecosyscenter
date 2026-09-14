@@ -1,0 +1,221 @@
+#!/usr/bin/env python3
+"""Módulo Crachá — 54 × 86 mm (CR80 vertical), frente e verso.
+
+Frente : tarja azul com o símbolo isolado, foto, nome e cargo.
+Verso  : assinatura reduzida, QR de validação assinado, CPF discreto abaixo.
+
+A CHAVE PRIVADA NÃO MORA AQUI. Esta página é pública; quem emite carrega o
+arquivo da chave uma vez por sessão e ela fica só na memória da aba — não vai
+para disco, não vai para o servidor, e some ao fechar. Sem chave carregada, o
+QR não é gerado e a impressão fica travada.
+"""
+import core as C
+
+# Frente: a tarja é baixa (21 mm, e os 7 primeiros são do furo do cordão),
+# então ali vale o SÍMBOLO ISOLADO — mínimo do manual, 8 mm.
+# Verso: cabe a ASSINATURA REDUZIDA, a mesma do cartão — mínimo 20 mm.
+SIMB_FRENTE = 13.5      # mm de largura na tarja azul
+SLOT_Y      = 7.0       # nada de arte acima disto: é onde entra o furo do cordão
+ASSIN_VERSO = 32.0      # mm de largura no verso branco
+
+# 26 mm com 57 módulos dá 0,456 mm por módulo: acima do piso de 0,4 mm que o
+# celular precisa, e bem mais discreto que os 34 mm da primeira versão.
+QR_MM = 26.0
+QR_Y  = 25.5
+
+CAMPOS = """
+  <h2>Chave de emissão</h2>
+  <div class="chave" id="cracha-chave">
+    <div class="estado"><i></i><span id="cracha-chave-txt">Chave não carregada</span></div>
+    <p style="margin:0 0 8px">Sem a chave privada o QR não é gerado. Ela fica só
+    na memória desta aba — não é salva em lugar nenhum e some ao fechar.</p>
+    <input id="cracha-chavearq" type="file" accept=".json,.txt,application/json">
+  </div>
+
+  <h2 class="mt">Dados do funcionário</h2>
+  <label>Nome</label><input id="cracha-nome" value="Nome do Funcionário">
+  <label>Cargo</label><input id="cracha-cargo" value="Consultor Técnico de Vendas">
+  <label>CPF</label><input id="cracha-cpf" value="000.000.000-00" maxlength="14">
+  <label>Válido até (MM/AAAA)</label><input id="cracha-validade" value="12/2027" maxlength="7">
+  <label>Foto 3 × 4</label><input id="cracha-foto" type="file" accept="image/*">
+  <div class="fixo" style="margin-top:8px"><span>emissor</span><b>Center Ônibus</b></div>
+"""
+
+JS = """
+let CHAVE = null;              /* só na memória desta aba, nunca persistida */
+
+MODULO = {                      /* a variável já existe no base.js */
+  id:'cracha', titulo:'Crachá',
+  impressao:{w:54,h:86,cols:3,rows:3},
+  campos:['nome','cargo','cpf','validade'],
+  rotulos:['Frente','Verso'],
+  foto:null,
+
+  /* ---------- token assinado --------------------------------------- */
+  token(v){
+    if(!CHAVE) return '';
+    const carga=[(v.nome||'').toUpperCase(),
+                 (v.cargo||'').toUpperCase(), v.validade||''].join('|');
+    const bytes=new TextEncoder().encode(carga);
+    const sig=nacl.sign.detached(bytes, CHAVE);
+    return 'CO1.'+bytesB64u(bytes)+'.'+bytesB64u(sig);
+  },
+  urlValidacao(v){ const t=this.token(v); return t ? URL_VALIDADOR+'#'+t : ''; },
+
+  podeImprimir(){
+    if(CHAVE) return true;
+    alert('Carregue a chave de emissão antes de imprimir — sem ela o crachá sai sem QR.');
+    return false;
+  },
+
+  /* ---------- faces -------------------------------------------------- */
+  frente(v){
+    const F=MODULO.foto;
+    const foto = F
+      ? `<image href="${F}" x="11" y="26" width="32" height="40"
+           preserveAspectRatio="xMidYMid slice" clip-path="url(#cracha-cf)"/>`
+      : `<rect x="11" y="26" width="32" height="40" fill="${GREY}"/>
+         <g fill="#b6bec8"><circle cx="27" cy="41" r="5.4"/>
+         <path d="M18.4 58c1.8-4.2 5-6.3 8.6-6.3s6.8 2.1 8.6 6.3z"/></g>
+         ${T(27,63.4,'SEM FOTO',1.1,{w:500,ls:.2,fill:'#98a2ae',a:'middle'})}`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54 86" preserveAspectRatio="none">
+      <defs><clipPath id="cracha-cf"><rect x="11" y="26" width="32" height="40"/></clipPath></defs>
+      <rect width="54" height="86" fill="${WHITE}"/>
+      <rect width="54" height="21" fill="${NAVY}"/>
+      ${simboloC(27,%(SYF)s,%(SWF)s,true)}
+      ${foto}
+      <rect x="11" y="26" width="32" height="40" fill="none" stroke="${NAVY}" stroke-width=".25"/>
+      ${T(27,74.2,(v.nome||'').toUpperCase(),4.2,{f:'ArchivoCond',w:700,ls:.005,a:'middle',id:'nm'})}
+      ${T(27,78.4,(v.cargo||'').toUpperCase(),1.42,{w:500,ls:.18,fill:STEEL,a:'middle',id:'cg'})}
+      ${faixaRodape(54,83.4,2.6)}
+      <rect class="safe" x="20.5" y="3.5" width="13" height="3.5" rx="1.75" fill="none"
+        stroke="${STEEL}" stroke-width=".2" stroke-dasharray=".7 .7"/>
+      ${guiaSeg(54,86,4)}</svg>`;
+  },
+
+  verso(v){
+    const url=MODULO.urlValidacao(v);
+    const qr = url
+      ? qrPath(url,%(QX)s,%(QY)s,%(QS)s)
+      : `<rect x="%(QX)s" y="%(QY)s" width="%(QS)s" height="%(QS)s" fill="none"
+           stroke="#c9cfd6" stroke-width=".3" stroke-dasharray="1.4 1.4"/>
+         ${T(27,%(QM)s,'CHAVE DE EMISSÃO',1.05,{w:600,ls:.16,fill:'#98a2ae',a:'middle'})}
+         ${T(27,%(QM2)s,'NÃO CARREGADA',1.05,{w:600,ls:.16,fill:'#98a2ae',a:'middle'})}`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54 86" preserveAspectRatio="none">
+      <rect width="54" height="86" fill="${WHITE}"/>
+      ${assinaturaC(27,%(AYV)s,%(AWV)s,false)}
+      ${T(27,20.6,'VALIDAÇÃO DO FUNCIONÁRIO',1.15,{w:600,ls:.24,fill:NAVY,a:'middle',id:'vt'})}
+      ${qr}
+      ${T(27,56.6,'APONTE A CÂMERA PARA VALIDAR',1.05,{w:500,ls:.18,fill:STEEL,a:'middle',id:'ap'})}
+      <line x1="16" y1="63.0" x2="38" y2="63.0" stroke="${NAVY}" stroke-width=".12"/>
+      ${T(27,68.4,'CPF '+(v.cpf||''),1.35,{w:500,ls:.06,fill:STEEL,a:'middle',id:'cp'})}
+      ${T(27,73.6,'VÁLIDO ATÉ '+(v.validade||''),1.05,
+          {w:500,ls:.12,fill:'#8a929c',a:'middle',id:'mt'})}
+      ${T(27,78.8,'EM CASO DE PERDA, DEVOLVER À CENTER ÔNIBUS',1.00,
+          {w:400,ls:.06,fill:'#8a929c',a:'middle',id:'pd'})}
+      ${faixaRodape(54,83.4,2.6)}
+      <rect class="safe" x="20.5" y="3.5" width="13" height="3.5" rx="1.75" fill="none"
+        stroke="${STEEL}" stroke-width=".2" stroke-dasharray=".7 .7"/>
+      ${guiaSeg(54,86,4)}</svg>`;
+  },
+
+  ajustar(root){
+    root.querySelectorAll('.peca svg, .stage svg').forEach(svg=>{
+      if(svg.querySelector('#nm')) shrink(svg,'nm',44);
+      if(svg.querySelector('#cg')) shrink(svg,'cg',44);
+      ['vt','ap','cp','mt','pd'].forEach(id=>shrink(svg,id,44));
+    });
+  },
+
+  aoMontar(){
+    /* ---- chave de emissão ---------------------------------------- */
+    const cx=document.getElementById('cracha-chave');
+    const txt=document.getElementById('cracha-chave-txt');
+    const marcar=(classe,msg)=>{ cx.className='chave '+classe; txt.textContent=msg;
+      document.querySelectorAll('[data-precisa-chave]')
+              .forEach(b=>b.disabled=(classe!=='ok')); };
+    marcar('','Chave não carregada');
+
+    document.getElementById('cracha-chavearq').addEventListener('change',e=>{
+      const f=e.target.files[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload=()=>{
+        try{
+          let bruto=String(r.result).trim(), sec=bruto;
+          if(bruto[0]==='{') sec=(JSON.parse(bruto).sec_b64||'').trim();
+          const bytes=b64uBytes(sec);
+          if(bytes.length!==64) throw new Error('tamanho');
+          /* a chave só serve se corresponder à pública que este site conhece */
+          const pub=bytesB64u(nacl.sign.keyPair.fromSecretKey(bytes).publicKey);
+          if(pub!==CHAVE_PUBLICA) throw new Error('par');
+          CHAVE=bytes;
+          marcar('ok','Chave carregada — pode emitir');
+        }catch(err){
+          CHAVE=null;
+          marcar('erro', err.message==='par'
+            ? 'Essa chave não é a da Center Ônibus'
+            : 'Arquivo de chave inválido');
+        }
+        preview();
+      };
+      r.readAsText(f);
+    });
+
+    /* ---- foto ----------------------------------------------------- */
+    document.getElementById('cracha-foto').addEventListener('change',e=>{
+      const f=e.target.files[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload=()=>{ MODULO.foto=r.result; preview(); };
+      r.readAsDataURL(f);
+    });
+
+    /* ---- CPF ------------------------------------------------------ */
+    const cpf=document.getElementById('cracha-cpf');
+    cpf.addEventListener('input',()=>{
+      let d=cpf.value.replace(/\\D/g,'').slice(0,11);
+      cpf.value = d.replace(/(\\d{3})(\\d)/,'$1.$2')
+                   .replace(/(\\d{3})\\.(\\d{3})(\\d)/,'$1.$2.$3')
+                   .replace(/\\.(\\d{3})(\\d{1,2})$/,'.$1-$2');
+      preview();
+    });
+  }
+};
+MODULO.faces = [MODULO.frente, MODULO.verso];
+iniciar(MODULO);
+""" % dict(SWF=SIMB_FRENTE,
+           SYF=round(SLOT_Y + (21.0 - SLOT_Y - SIMB_FRENTE/C.SIMB_RATIO)/2, 4),
+           AWV=ASSIN_VERSO, AYV=round(11.3 - (ASSIN_VERSO/C.ASSIN_RATIO)/2, 4),
+           QS=QR_MM, QX=round((54.0 - QR_MM)/2, 4), QY=QR_Y,
+           QM=round(QR_Y + QR_MM/2 - 1.2, 4), QM2=round(QR_Y + QR_MM/2 + 1.6, 4))
+
+
+def build():
+    corpo = f"""
+<style id="pagerule">@page{{size:54mm 86mm;margin:0}}</style>
+<main>
+  <div class="panel">
+    {CAMPOS}
+    <h2 class="mt">Impressão</h2>
+    <div class="seg">
+      <button data-m="unit" class="on" onclick="setImp('unit')">Peça única</button>
+      <button data-m="a4" onclick="setImp('a4')">Folha A4</button>
+    </div>
+    <div class="row">
+      <button class="red" data-precisa-chave onclick="imprimirUm()">Imprimir este</button>
+      <button class="ghost" data-precisa-chave onclick="imprimirLista()">Imprimir a lista</button>
+    </div>
+    <div class="row">
+      <button onclick="adicionar()">Adicionar à lista</button>
+      <button class="ghost" onclick="toggleGuias()">Margens</button>
+    </div>
+    <div class="lista" id="lista"></div>
+    <p class="hint" id="hint"></p>
+  </div>
+  <div class="stage" id="stage"></div>
+</main>
+<div id="print" class="m-unit"></div>"""
+    n = C.escrever("marketing/cracha/index.html", C.pagina(
+        "Crachá — Ecossistema Center Ônibus", "../../", corpo,
+        modulo_nome="Crachá", scripts=["qrcode.js", "nacl-fast.min.js"], js=JS,
+        descricao="Gerador de crachá 54 × 86 mm com QR de validação assinado."))
+    print(f"  marketing/cracha/index.html     {n//1024:>4} KB")

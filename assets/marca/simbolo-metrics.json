@@ -1,0 +1,14 @@
+{
+  "cor": {
+    "arquivo": "simbolo-cor.png",
+    "w": 1260,
+    "h": 833,
+    "ratio": 1.512605
+  },
+  "negativo": {
+    "arquivo": "simbolo-negativo.png",
+    "w": 1260,
+    "h": 833,
+    "ratio": 1.512605
+  }
+}
