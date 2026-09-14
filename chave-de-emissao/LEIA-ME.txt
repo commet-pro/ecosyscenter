@@ -1,0 +1,29 @@
+CHAVE DE EMISSAO DE CRACHA — CENTER ONIBUS
+==========================================
+ESTE ARQUIVO NAO PODE IR PARA O GITHUB, PARA DRIVE PUBLICO
+NEM PARA GRUPO DE WHATSAPP.
+
+chave-emissao.json e o que permite emitir cracha valido. Quem tem este
+arquivo consegue gerar um cracha que o validador aprova.
+
+COMO USAR
+  1. abrir o modulo Cracha no portal
+  2. em "Chave de emissao", clicar e escolher este arquivo
+  3. o aviso fica verde e a impressao libera
+
+A chave fica so na memoria da aba: nao e salva em lugar nenhum, nao vai para
+o servidor e some quando a aba fecha. Ao reabrir, carregar de novo.
+
+ONDE GUARDAR
+  No cofre de senhas da empresa, ou numa pasta do RH com acesso restrito.
+  Nao deixar em pasta compartilhada da rede.
+
+SE VAZAR
+  Gerar um par novo, trocar build/chave-publica.json no repositorio, rodar
+  python3 build/build.py, publicar, e reemitir os crachas. Os crachas antigos
+  passam a ser recusados pelo validador.
+
+OBSERVACAO
+  Este par foi gerado em 14/09/2026, novo. O par anterior circulou dentro dos
+  HTMLs entregues em agosto e setembro e foi descartado — aqueles arquivos
+  nao emitem mais nada valido.

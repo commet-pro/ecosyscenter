@@ -1,0 +1,39 @@
+COMO SUBIR PARA O GITHUB
+========================
+O zip ja vem com o repositorio git inicializado e o primeiro commit feito.
+Nao precisa criar nada do zero — so apontar para o seu repositorio e empurrar.
+
+  1. descompactar o zip
+  2. abrir o terminal dentro da pasta ecosyscenter
+  3. rodar:
+
+       git remote add origin https://github.com/commet-pro/ecosyscenter.git
+       git push -u origin main
+
+     (se o repositorio ja tiver algum commit, use:
+       git push -u --force origin main
+      — isso substitui o conteudo que estiver la)
+
+  4. no GitHub: Settings -> Pages
+       Source: Deploy from a branch
+       Branch: main    Folder: / (root)
+       Save
+
+  5. em um ou dois minutos o portal fica em
+       https://commet-pro.github.io/ecosyscenter/
+
+DEPOIS, PARA O QR DO CRACHA FUNCIONAR
+  O QR aponta para https://centeronibus.com.br/v
+  Enquanto esse endereco nao existir, o QR abre uma pagina que nao carrega.
+
+  Duas saidas:
+   a) publicar a pasta v/ em centeronibus.com.br/v (é so HTML estatico), ou
+   b) trocar URL_VALIDADOR em build/core.py para o endereco do GitHub Pages
+      https://commet-pro.github.io/ecosyscenter/v
+      e rodar python3 build/build.py de novo.
+
+  A opcao (a) é a boa a longo prazo: o QR impresso no cracha nao muda mais.
+
+A CHAVE DE EMISSAO
+  Esta na pasta chave-de-emissao, FORA do repositorio, e tem que continuar
+  fora. Leia o LEIA-ME.txt de la.
