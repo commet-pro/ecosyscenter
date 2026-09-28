@@ -24,11 +24,15 @@ def build():
     html = re.sub(r'<header>.*?</header>', header_portal, html, flags=re.DOTALL)
     html = re.sub(r'<title>.*?</title>', '<title>Template de e-mail — Ecossistema Center Ônibus</title>', html)
     
-    # Remove estilos do cabeçalho original para não interferir no nosso
-    html = re.sub(r'header\{.*?\}', '', html)
-    html = re.sub(r'header img\{.*?\}', '', html)
-    html = re.sub(r'header p\{.*?\}', '', html)
-    html = re.sub(r'header \.tag\{.*?\}', '', html)
+    # Remove estilos do cabeçalho original apenas dentro da tag <style> para não corromper o JavaScript
+    style_match = re.search(r'<style>(.*?)</style>', html, re.DOTALL)
+    if style_match:
+        style = style_match.group(1)
+        style = re.sub(r'header\{.*?\}', '', style)
+        style = re.sub(r'header img\{.*?\}', '', style)
+        style = re.sub(r'header p\{.*?\}', '', style)
+        style = re.sub(r'header \.tag\{.*?\}', '', style)
+        html = html[:style_match.start(1)] + style + html[style_match.end(1):]
 
     n = C.escrever("marketing/template-email/index.html", html)
     print(f"  marketing/template-email/index.html     {n//1024:>4} KB")
