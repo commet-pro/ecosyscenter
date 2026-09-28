@@ -1,0 +1,7 @@
+Modelo Center Ônibus
+
+Importe center-email.html e hospede as imagens junto ao template na plataforma de envio. Para envio por HTML, os caminhos das imagens precisam ser convertidos em URLs públicas HTTPS pela plataforma. A prévia local usa arquivos relativos.
+
+Substitua todos os espaços de produto antes do envio. Confira preços, aplicação, links, condições, endereço e descadastro. Faça um envio de teste em computador e celular. Este pacote não envia mensagens.
+
+O Mailchimp aceita ZIP com um HTML e imagens na raiz, mas limita o pacote a 1 MB; se o pacote superar esse limite, carregue os arquivos pela biblioteca da plataforma.

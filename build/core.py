@@ -63,6 +63,9 @@ CATEGORIAS = [
          dict(nome="Validador de crachá", href="marketing/validador/",
               desc="Lê o QR pela câmera e diz se o crachá é autêntico. Funciona "
                    "offline e não consegue emitir — só conferir."),
+         dict(nome="Template de e-mail", href="marketing/template-email/",
+              desc="Gerador de template promocional em HTML para campanhas "
+                   "comerciais, com exportação para plataformas de envio."),
          dict(nome="Assinatura de e-mail", desc="Bloco de assinatura padronizado, "
               "pronto para colar no Gmail e no Outlook."),
          dict(nome="Papelaria", desc="Timbrado, envelope e pasta na identidade nova."),

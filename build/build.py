@@ -16,9 +16,9 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import core as C
-import portal, mod_cartao, mod_cracha, mod_validador, validador_publico
+import portal, mod_cartao, mod_cracha, mod_validador, validador_publico, mod_template_email
 
-MODULOS = [portal, mod_cartao, mod_cracha, mod_validador, validador_publico]
+MODULOS = [portal, mod_cartao, mod_cracha, mod_validador, validador_publico, mod_template_email]
 
 
 def main():
