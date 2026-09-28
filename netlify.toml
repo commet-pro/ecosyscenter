@@ -1,0 +1,8 @@
+[build]
+  command = "python3 build/build.py"
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
