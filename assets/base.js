@@ -3,8 +3,8 @@ const CAP_ARCH=0.686, CAP_INTER=0.728;
 const SIMB_RATIO=1.512605, SIMB_MIN=8.0;
 const ASSIN_RATIO=4.684647, ASSIN_MIN=20.0;
 const ESTADOS="SÃO PAULO · BAHIA · RIO DE JANEIRO", SITE="www.centeronibus.com.br", TEL_GERAL="(11) 2967-3002";
-const CHAVE_PUBLICA="ZJ78EiD4eU9HKP_Ec13fd5FLOI3qkFR3BBKmqaVyvZ8";
-const URL_VALIDADOR="https://centeronibus.com.br/v";
+const CHAVE_PUBLICA="3wl9XPhQhpsfGkBQan0wfHKDCknCGqxFeKiQJ5jw0mc";
+const URL_VALIDADOR="" || new URL(BASE+"v/",location.href).href;
 const MARCA = BASE + 'assets/marca/';
 const SIMB_COR = MARCA+'simbolo-cor.png',  SIMB_NEG = MARCA+'simbolo-negativo.png';
 const ASSIN_COR= MARCA+'assinatura-reduzida-cor.png',
@@ -161,9 +161,13 @@ async function montarImpressao(itens){
 
 async function imprimir(itens){
   if (MODULO.podeImprimir && !MODULO.podeImprimir()) return;
-  await montarImpressao(itens);
-  await new Promise(r=>setTimeout(r,120));
-  window.print();
+  try {
+    if(MODULO.preparar) await MODULO.preparar(itens);
+    await montarImpressao(itens);
+    await document.fonts.ready;
+    await Promise.all([...document.querySelectorAll('#print image')].map(e=>new Promise(resolve=>{const img=new Image();img.onload=resolve;img.onerror=resolve;img.src=e.getAttribute('href');})));
+    window.print();
+  } catch(e) {document.getElementById('print').replaceChildren();alert(e.message);}
 }
 
 /* --------------------------------------------------------------- shell */
@@ -172,8 +176,11 @@ const dados = () => Object.fromEntries(MODULO.campos.map(k => {
   const el = campoEl(k); return [k, el ? el.value : ''];
 }));
 
+let previewRevision=0;
 async function preview(){
+  const revision=++previewRevision;
   const st = document.getElementById('stage');
+  const fragment=document.createDocumentFragment();
   st.innerHTML = '';
   for (let i=0; i<MODULO.faces.length; i++){
     const box = document.createElement('div');
@@ -183,14 +190,17 @@ async function preview(){
     p.className = 'peca' + (guias?' guias':'');
     p.style.width = MODULO.impressao.w+'mm'; p.style.height = MODULO.impressao.h+'mm';
     p.innerHTML = await MODULO.faces[i](dados());
-    box.append(cap,p); st.appendChild(box);
+    box.append(cap,p); fragment.appendChild(box);
   }
-  MODULO.ajustar(st);
+  if(revision!==previewRevision)return;
+  st.replaceChildren(fragment);
+  await document.fonts.ready;
+  if(revision===previewRevision)MODULO.ajustar(st);
 }
 
 function imprimirUm(){ imprimir([dados()]); }
 function imprimirLista(){ imprimir(lista.length?lista:[dados()]); }
-function adicionar(){ lista.push(dados()); refresh(); }
+function adicionar(){ lista.push({...dados(),_foto:MODULO.foto}); refresh(); }
 function remover(i){ lista.splice(i,1); refresh(); }
 function refresh(){
   document.getElementById('lista').innerHTML = lista.map((v,i) =>

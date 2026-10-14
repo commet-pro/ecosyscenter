@@ -10,3 +10,13 @@ chaves/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Dados e configurações privadas do servidor
+.data/
+.env
+.env.*
+!.env.example
+dist/
+*.sqlite*
+node_modules/
+.netlify/

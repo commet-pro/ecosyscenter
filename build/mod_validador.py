@@ -11,12 +11,14 @@ const VAL = {
   stream:null,
 
   async camera(){
+    this.parar();
     const w=document.getElementById('camwrap'), v=document.getElementById('vid');
     try{
       const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-      w.style.display='block'; v.srcObject=s; await v.play();
-      this.stream=s; this.loop();
+      this.stream=s;w.style.display='block'; v.srcObject=s; await v.play();
+      this.loop();
     }catch(e){
+      this.parar();
       document.getElementById('res').innerHTML =
         `<div class="fixo">Não consegui abrir a câmera (${esc(e.name)}).
          Use <b>Colar código</b>.</div>`;
@@ -24,6 +26,7 @@ const VAL = {
   },
 
   loop(){
+    if(!this.stream)return;
     const v=document.getElementById('vid'), c=document.getElementById('cnv');
     if(!v||!v.videoWidth) return requestAnimationFrame(()=>this.loop());
     c.width=v.videoWidth; c.height=v.videoHeight;
@@ -67,7 +70,8 @@ const VAL = {
     const [nome,cargo,val]=campos;
     let vencido=false;
     const m=/^(\d{2})\/(\d{4})$/.exec(val||'');
-    if(m) vencido = new Date() >= new Date(+m[2], +m[1], 1);
+    if(campos.length!==3 || !nome || !cargo || !m || +m[1]<1 || +m[1]>12) return res.innerHTML=this.cartao(false,'Dados do crachá inválidos','');
+    vencido = new Date() >= new Date(+m[2], +m[1], 1);
     res.innerHTML=this.cartao(!vencido, vencido?'Crachá vencido':'Crachá autêntico',
       `<div class="nome">${esc(nome)}</div>
        <div class="cargo">${esc(cargo)}</div>
@@ -83,6 +87,7 @@ const VAL = {
       ${corpo||''}</div>`;
   }
 };
+window.addEventListener('pagehide',()=>VAL.parar());
 """
 
 

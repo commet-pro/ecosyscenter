@@ -82,9 +82,9 @@ def build():
 <div class="portal">
   <div class="capa">
     <h1>Ecossistema Center Ônibus</h1>
-    <p class="sub">Cada peça da operação vira um módulo aqui dentro. Tudo roda no
-    navegador — sem servidor, sem instalar nada, e nenhum dado de funcionário ou
-    de cliente sai do computador de quem está usando.</p>
+    <p class="sub">Cada peça da operação vira um módulo aqui dentro. Crie materiais,
+    emita crachás com acesso individual e acompanhe a produção de conteúdo.
+    Emissões e ações administrativas ficam registradas no servidor.</p>
   </div>
   <div class="num">
     <div><b>{len(C.CATEGORIAS)}</b>categorias</div>

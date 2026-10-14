@@ -1,0 +1,41 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {mkdtempSync,cpSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {generateKeyPairSync,randomBytes,verify} from 'node:crypto';
+import {hash} from '../server/security.mjs';
+import {DatabaseSync} from 'node:sqlite';
+test('servidor: autorização, auditoria, assinatura e isolamento de dados',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'center-test-'));cpSync(new URL('../server/',import.meta.url),join(dir,'server'),{recursive:true});mkdirSync(join(dir,'build'));
+ const {privateKey,publicKey}=generateKeyPairSync('ed25519'),pub=publicKey.export({type:'spki',format:'der'}).subarray(-32),seed=privateKey.export({type:'pkcs8',format:'der'}).subarray(-32);
+ writeFileSync(join(dir,'build/chave-publica.json'),JSON.stringify({pub_b64:pub.toString('base64url')}));
+ const child=spawn(process.execPath,[join(dir,'server/index.mjs')],{env:{...process.env,PORT:'0',PUBLIC_ORIGIN:'http://localhost:8000',BADGE_SECRET_B64:Buffer.concat([seed,pub]).toString('base64url'),SETTINGS_KEY:randomBytes(32).toString('base64'),DATA_DIR:join(dir,'data'),OPERATORS_JSON:JSON.stringify([{id:'admin',sha256:hash('admin-test'),roles:['admin']},{id:'rh',sha256:hash('rh-test'),roles:['issuer']}])},stdio:['ignore','pipe','pipe']});
+ try {
+  const address=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('startup timeout')),10000);child.stdout.on('data',d=>{const m=/PORT=(\d+)/.exec(d.toString());if(m){clearTimeout(timer);resolve('http://127.0.0.1:'+m[1]);}});child.on('exit',()=>reject(Error('server exit')));});
+  const request=(path,cred='admin-test',options={})=>fetch(address+path,{...options,headers:{Authorization:'Bearer '+cred,'Content-Type':'application/json',...options.headers}});
+  assert.equal((await request('/api/me','wrong')).status,401);
+  assert.equal((await request('/api/audit','rh-test')).status,403);
+  const v={nome:'João',cargo:'Vendas',validade:'12/2099'};
+  assert.equal((await request('/api/badges/sign','rh-test',{method:'POST',body:JSON.stringify(v)})).status,400);
+  const signed=await (await request('/api/badges/sign','rh-test',{method:'POST',body:JSON.stringify({...v,location:{latitude:-23,longitude:-46,accuracy:20}}),headers:{'X-Real-IP':'spoofed'}})).json();
+  const parts=signed.token.split('.');assert.ok(verify(null,Buffer.from(parts[1],'base64url'),publicKey,Buffer.from(parts[2],'base64url')));
+  const logs=await (await request('/api/audit')).json(),row=logs.find(r=>r.action==='badge.sign');assert.equal(row.actor,'rh');assert.notEqual(row.ip,'spoofed');assert.ok(row.at);assert.equal(JSON.parse(row.detail).location.latitude,-23);
+  for(const path of ['/server/index.mjs','/.env','/build/chave-publica.json','/.data/center.sqlite','/assets/../server/index.mjs'])assert.equal((await request(path)).status,404);
+  const cfg={provider:'google',model:'test-model',key:'fake-provider-key-123',topic:'Peças de carroceria',hour:9,enabled:false,autoPublish:false};
+  assert.equal((await request('/api/ai/config','admin-test',{method:'POST',body:JSON.stringify(cfg)})).status,200);
+  const read=await(await request('/api/ai/config')).json();assert.equal(read.connected,true);assert.equal(read.key,undefined);
+  const connection=new DatabaseSync(join(dir,'data','center.sqlite'));
+  assert.ok(!connection.prepare('SELECT value FROM settings').get().value.includes(cfg.key));
+  const article={title:'<script>alert(1)</script>',description:'Guia seguro',paragraphs:['<img src=x onerror=alert(1)>'],sources:[{title:'Manual',url:'https://example.com/manual'}],technicalClaims:true};
+  connection.prepare('INSERT INTO posts VALUES(?,?,?,?)').run('abc-123',new Date().toISOString(),'draft',JSON.stringify(article));connection.close();
+  assert.equal((await request('/blog/abc-123/')).status,404);
+  assert.equal((await request('/api/posts/publish','rh-test',{method:'POST',body:JSON.stringify({id:'abc-123'})})).status,403);
+  assert.equal((await request('/api/posts/publish','admin-test',{method:'POST',body:JSON.stringify({id:'abc-123'})})).status,200);
+  const rendered=await(await request('/blog/abc-123/')).text();assert.match(rendered,/application\/ld\+json/);assert.match(rendered,/&lt;script&gt;/);assert.ok(!rendered.includes('<img src=x'));
+  assert.equal((await request('/api/ai/config','rh-test')).status,403);
+  assert.equal((await request('/api/me','admin-test',{headers:{Origin:'https://wrong.example'}})).status,403);
+  assert.equal((await request('/blog/')).status,200);assert.equal((await request('/sitemap.xml')).status,200);
+ }finally{child.kill();await new Promise(r=>child.once('exit',r));rmSync(dir,{recursive:true,force:true});}
+});

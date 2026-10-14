@@ -4,10 +4,8 @@
 Frente : tarja azul com o símbolo isolado, foto, nome e cargo.
 Verso  : assinatura reduzida, QR de validação assinado, CPF discreto abaixo.
 
-A CHAVE PRIVADA NÃO MORA AQUI. Esta página é pública; quem emite carrega o
-arquivo da chave uma vez por sessão e ela fica só na memória da aba — não vai
-para disco, não vai para o servidor, e some ao fechar. Sem chave carregada, o
-QR não é gerado e a impressão fica travada.
+A chave privada fica exclusivamente no servidor. Operadores individuais
+solicitam assinatura autenticada e auditada antes de imprimir.
 """
 import core as C
 
@@ -24,12 +22,12 @@ QR_MM = 26.0
 QR_Y  = 25.5
 
 CAMPOS = """
-  <h2>Chave de emissão</h2>
+  <h2>Acesso de emissão</h2>
   <div class="chave" id="cracha-chave">
-    <div class="estado"><i></i><span id="cracha-chave-txt">Chave não carregada</span></div>
-    <p style="margin:0 0 8px">Sem a chave privada o QR não é gerado. Ela fica só
-    na memória desta aba — não é salva em lugar nenhum e some ao fechar.</p>
-    <input id="cracha-chavearq" type="file" accept=".json,.txt,application/json">
+    <div class="estado"><i></i><span id="cracha-chave-txt">Acesso não conectado</span></div>
+    <p>Use sua credencial individual. A emissão registra data, hora, IP e localização do navegador no servidor. Permita a localização para emitir.</p>
+    <label for="cracha-acesso">Credencial individual</label><input id="cracha-acesso" type="password" autocomplete="off">
+    <div class="row"><button id="cracha-entrar">Conectar</button><button id="cracha-sair" class="ghost">Sair</button></div>
   </div>
 
   <h2 class="mt">Dados do funcionário</h2>
@@ -52,25 +50,26 @@ MODULO = {                      /* a variável já existe no base.js */
   foto:null,
 
   /* ---------- token assinado --------------------------------------- */
-  token(v){
-    if(!CHAVE) return '';
-    const carga=[(v.nome||'').toUpperCase(),
-                 (v.cargo||'').toUpperCase(), v.validade||''].join('|');
-    const bytes=new TextEncoder().encode(carga);
-    const sig=nacl.sign.detached(bytes, CHAVE);
-    return 'CO1.'+bytesB64u(bytes)+'.'+bytesB64u(sig);
-  },
+  token(v){ return this.tokens.get(JSON.stringify([v.nome,v.cargo,v.validade])) || ''; },
+  tokens:new Map(),
   urlValidacao(v){ const t=this.token(v); return t ? URL_VALIDADOR+'#'+t : ''; },
-
+  async preparar(itens){
+    if(!CHAVE) throw Error('Conecte seu acesso individual antes de emitir.');
+    const geo=await CenterAccess.locate();
+    for(const v of itens){
+      const result=await CenterAccess.request('badges/sign',{method:'POST',body:JSON.stringify({nome:v.nome,cargo:v.cargo,validade:v.validade,location:geo})});
+      this.tokens.set(JSON.stringify([v.nome,v.cargo,v.validade]), result.token);
+    }
+    await preview();
+  },
   podeImprimir(){
     if(CHAVE) return true;
-    alert('Carregue a chave de emissão antes de imprimir — sem ela o crachá sai sem QR.');
-    return false;
+    alert('Conecte o acesso de emissão antes de imprimir.');return false;
   },
 
   /* ---------- faces -------------------------------------------------- */
   frente(v){
-    const F=MODULO.foto;
+    const F=Object.hasOwn(v,'_foto')?v._foto:MODULO.foto;
     const foto = F
       ? `<image href="${F}" x="11" y="26" width="32" height="40"
            preserveAspectRatio="xMidYMid slice" clip-path="url(#cracha-cf)"/>`
@@ -99,8 +98,8 @@ MODULO = {                      /* a variável já existe no base.js */
       ? qrPath(url,%(QX)s,%(QY)s,%(QS)s)
       : `<rect x="%(QX)s" y="%(QY)s" width="%(QS)s" height="%(QS)s" fill="none"
            stroke="#c9cfd6" stroke-width=".3" stroke-dasharray="1.4 1.4"/>
-         ${T(27,%(QM)s,'CHAVE DE EMISSÃO',1.05,{w:600,ls:.16,fill:'#98a2ae',a:'middle'})}
-         ${T(27,%(QM2)s,'NÃO CARREGADA',1.05,{w:600,ls:.16,fill:'#98a2ae',a:'middle'})}`;
+         ${T(27,%(QM)s,'QR DE VALIDAÇÃO',1.05,{w:600,ls:.16,fill:'#98a2ae',a:'middle'})}
+         ${T(27,%(QM2)s,'AGUARDANDO EMISSÃO',1.05,{w:600,ls:.16,fill:'#98a2ae',a:'middle'})}`;
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54 86" preserveAspectRatio="none">
       <rect width="54" height="86" fill="${WHITE}"/>
       ${assinaturaC(27,%(AYV)s,%(AWV)s,false)}
@@ -136,34 +135,29 @@ MODULO = {                      /* a variável já existe no base.js */
               .forEach(b=>b.disabled=(classe!=='ok')); };
     marcar('','Chave não carregada');
 
-    document.getElementById('cracha-chavearq').addEventListener('change',e=>{
-      const f=e.target.files[0]; if(!f) return;
-      const r=new FileReader();
-      r.onload=()=>{
-        try{
-          let bruto=String(r.result).trim(), sec=bruto;
-          if(bruto[0]==='{') sec=(JSON.parse(bruto).sec_b64||'').trim();
-          const bytes=b64uBytes(sec);
-          if(bytes.length!==64) throw new Error('tamanho');
-          /* a chave só serve se corresponder à pública que este site conhece */
-          const pub=bytesB64u(nacl.sign.keyPair.fromSecretKey(bytes).publicKey);
-          if(pub!==CHAVE_PUBLICA) throw new Error('par');
-          CHAVE=bytes;
-          marcar('ok','Chave carregada — pode emitir');
-        }catch(err){
-          CHAVE=null;
-          marcar('erro', err.message==='par'
-            ? 'Essa chave não é a da Center Ônibus'
-            : 'Arquivo de chave inválido');
-        }
-        preview();
-      };
-      r.readAsText(f);
-    });
+    const script=document.createElement('script');script.src=BASE+'assets/access.js';
+    document.getElementById('cracha-entrar').disabled=true;
+    script.onload=()=>document.getElementById('cracha-entrar').disabled=false;
+    document.body.append(script);
+    document.getElementById('cracha-entrar').onclick=async()=>{
+      CHAVE=null;MODULO.tokens.clear();document.getElementById('print').replaceChildren();
+      const input=document.getElementById('cracha-acesso');
+      try{
+        CenterAccess.credential=input.value.trim(); input.value='';
+        const me=await CenterAccess.request('me');
+        if(!me.roles.some(r=>['admin','issuer'].includes(r)))throw Error('Acesso sem permissão de emissão.');
+        CHAVE=true;marcar('ok','Conectado como '+me.id+' — emissão rastreada');
+      }catch(e){CHAVE=null;CenterAccess.credential='';marcar('erro',e.message);}
+    };
+    document.getElementById('cracha-sair').onclick=()=>{
+      CHAVE=null;if(window.CenterAccess)CenterAccess.credential='';MODULO.tokens.clear();
+      document.getElementById('print').replaceChildren();marcar('','Acesso encerrado');preview();
+    };
 
     /* ---- foto ----------------------------------------------------- */
     document.getElementById('cracha-foto').addEventListener('change',e=>{
       const f=e.target.files[0]; if(!f) return;
+      if(!['image/jpeg','image/png','image/webp'].includes(f.type)||f.size>10*1024*1024){alert('Use uma foto JPG, PNG ou WebP de até 10 MB.');return;}
       const r=new FileReader();
       r.onload=()=>{ MODULO.foto=r.result; preview(); };
       r.readAsDataURL(f);
@@ -180,8 +174,10 @@ MODULO = {                      /* a variável já existe no base.js */
     });
   }
 };
+async function gerarQR(){try{await MODULO.preparar([dados()]);}catch(e){alert(e.message);}}
 MODULO.faces = [MODULO.frente, MODULO.verso];
 iniciar(MODULO);
+window.addEventListener('beforeprint',()=>{if(!document.getElementById('print').children.length)alert('Use os botões de emissão para registrar e preparar o crachá.');});
 """ % dict(SWF=SIMB_FRENTE,
            SYF=round(SLOT_Y + (21.0 - SLOT_Y - SIMB_FRENTE/C.SIMB_RATIO)/2, 4),
            AWV=ASSIN_VERSO, AYV=round(11.3 - (ASSIN_VERSO/C.ASSIN_RATIO)/2, 4),
@@ -195,6 +191,7 @@ def build():
 <main>
   <div class="panel">
     {CAMPOS}
+    <div class="row"><button data-precisa-chave onclick="gerarQR()">Gerar QR e conferir</button></div>
     <h2 class="mt">Impressão</h2>
     <div class="seg">
       <button data-m="unit" class="on" onclick="setImp('unit')">Peça única</button>

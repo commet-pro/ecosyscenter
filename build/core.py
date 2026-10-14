@@ -35,15 +35,15 @@ ASSIN_RATIO, ASSIN_MIN = _ASSIN["ratio"],      20.0     # assinatura reduzida, m
 
 # só a chave pública entra no repositório. A privada fica com quem emite.
 CHAVE_PUBLICA  = json.load(open(f"{BUILD}/chave-publica.json"))["pub_b64"]
-URL_VALIDADOR  = "https://centeronibus.com.br/v"
+URL_VALIDADOR  = os.environ.get("VALIDATOR_URL", "")
 
 # montadoras já posicionadas para a frente do cartão
 MONT_SVG = "".join(
     f'<g transform="translate({v["tx"]},{v["ty"]}) scale({v["s"]})">{v["body"]}</g>'
     for v in json.load(open(f"{BUILD}/montadoras.json", encoding="utf-8")).values())
 
-VERSAO = "2.0"
-DATA   = "14/09/2026"
+VERSAO = "3.0"
+DATA   = "13/10/2026"
 
 
 # --------------------------------------------------------------- catálogo
@@ -66,6 +66,7 @@ CATEGORIAS = [
          dict(nome="Template de e-mail", href="marketing/template-email/",
               desc="Gerador de template promocional em HTML para campanhas "
                    "comerciais, com exportação para plataformas de envio."),
+         dict(nome="Assistente de conteúdo", href="marketing/assistente/", desc="Pesquisa com fontes, artigos e programação editorial com IA."),
          dict(nome="Assinatura de e-mail", desc="Bloco de assinatura padronizado, "
               "pronto para colar no Gmail e no Outlook."),
          dict(nome="Papelaria", desc="Timbrado, envelope e pasta na identidade nova."),
@@ -284,7 +285,7 @@ def js_base():
       f'const ASSIN_RATIO={ASSIN_RATIO}, ASSIN_MIN={ASSIN_MIN};\n'
       f'const ESTADOS="{ESTADOS}", SITE="{SITE_LINE}", TEL_GERAL="{TEL_GERAL}";\n'
       f'const CHAVE_PUBLICA="{CHAVE_PUBLICA}";\n'
-      f'const URL_VALIDADOR="{URL_VALIDADOR}";')
+      f'const URL_VALIDADOR={json.dumps(URL_VALIDADOR)} || new URL(BASE+"v/",location.href).href;')
     return cabeca + r"""
 const MARCA = BASE + 'assets/marca/';
 const SIMB_COR = MARCA+'simbolo-cor.png',  SIMB_NEG = MARCA+'simbolo-negativo.png';
@@ -442,9 +443,13 @@ async function montarImpressao(itens){
 
 async function imprimir(itens){
   if (MODULO.podeImprimir && !MODULO.podeImprimir()) return;
-  await montarImpressao(itens);
-  await new Promise(r=>setTimeout(r,120));
-  window.print();
+  try {
+    if(MODULO.preparar) await MODULO.preparar(itens);
+    await montarImpressao(itens);
+    await document.fonts.ready;
+    await Promise.all([...document.querySelectorAll('#print image')].map(e=>new Promise(resolve=>{const img=new Image();img.onload=resolve;img.onerror=resolve;img.src=e.getAttribute('href');})));
+    window.print();
+  } catch(e) {document.getElementById('print').replaceChildren();alert(e.message);}
 }
 
 /* --------------------------------------------------------------- shell */
@@ -453,8 +458,11 @@ const dados = () => Object.fromEntries(MODULO.campos.map(k => {
   const el = campoEl(k); return [k, el ? el.value : ''];
 }));
 
+let previewRevision=0;
 async function preview(){
+  const revision=++previewRevision;
   const st = document.getElementById('stage');
+  const fragment=document.createDocumentFragment();
   st.innerHTML = '';
   for (let i=0; i<MODULO.faces.length; i++){
     const box = document.createElement('div');
@@ -464,14 +472,17 @@ async function preview(){
     p.className = 'peca' + (guias?' guias':'');
     p.style.width = MODULO.impressao.w+'mm'; p.style.height = MODULO.impressao.h+'mm';
     p.innerHTML = await MODULO.faces[i](dados());
-    box.append(cap,p); st.appendChild(box);
+    box.append(cap,p); fragment.appendChild(box);
   }
-  MODULO.ajustar(st);
+  if(revision!==previewRevision)return;
+  st.replaceChildren(fragment);
+  await document.fonts.ready;
+  if(revision===previewRevision)MODULO.ajustar(st);
 }
 
 function imprimirUm(){ imprimir([dados()]); }
 function imprimirLista(){ imprimir(lista.length?lista:[dados()]); }
-function adicionar(){ lista.push(dados()); refresh(); }
+function adicionar(){ lista.push({...dados(),_foto:MODULO.foto}); refresh(); }
 function remover(i){ lista.splice(i,1); refresh(); }
 function refresh(){
   document.getElementById('lista').innerHTML = lista.map((v,i) =>
@@ -511,6 +522,7 @@ def pagina(titulo, base, corpo, modulo_nome="", scripts=(), js="", js_antes="",
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
 <title>{titulo}</title>
 {meta}<link rel="stylesheet" href="{base}assets/base.css">
 <link rel="icon" href="{base}assets/marca/simbolo-cor.png">

@@ -1,39 +1,40 @@
-COMO SUBIR PARA O GITHUB
-========================
-O zip ja vem com o repositorio git inicializado e o primeiro commit feito.
-Nao precisa criar nada do zero — so apontar para o seu repositorio e empurrar.
+NETLIFY / AUTODEPLOY
 
-  1. descompactar o zip
-  2. abrir o terminal dentro da pasta ecosyscenter
-  3. rodar:
+Produção: branch main, https://intranet.centeronibus.com.br.
+O build publica dist/ e as funções de netlify/functions/.
+As funções guardam auditoria e conteúdo no Netlify Blobs. A IA usa
+processamento em segundo plano e verificação agendada a cada hora.
+Configure os segredos no Netlify, somente em production:
+BADGE_SECRET_B64, OPERATORS_JSON, SETTINGS_KEY, PUBLIC_ORIGIN, CENTER_ENV.
+Veja README.md para detalhes. Nunca suba .env ou chave-emissao.json ao GitHub.
 
-       git remote add origin https://github.com/commet-pro/ecosyscenter.git
-       git push -u origin main
+MODO LOCAL / PUBLICAÇÃO SOMENTE ESTÁTICA
 
-     (se o repositorio ja tiver algum commit, use:
-       git push -u --force origin main
-      — isso substitui o conteudo que estiver la)
+PUBLICAÇÃO — ECOSSISTEMA CENTER ÔNIBUS v3
 
-  4. no GitHub: Settings -> Pages
-       Source: Deploy from a branch
-       Branch: main    Folder: / (root)
-       Save
+Consulte README.md para configuração completa.
 
-  5. em um ou dois minutos o portal fica em
-       https://commet-pro.github.io/ecosyscenter/
+1. Rode python build/build.py para gerar as páginas e a pasta dist/.
+2. Para cartão, editor de e-mail e validação pública, publique apenas dist/.
+   Netlify já está configurado para essa pasta. Não publique a raiz inteira
+   do checkout depois de configurar .env ou dados privados.
+3. Emissão rastreada, auditoria, IA e blog exigem o servidor Node.js 24+.
+   Configure .env a partir de .env.example, credenciais individuais,
+   chave privada existente e SETTINGS_KEY. Execute:
+     node --env-file=.env server/index.mjs
+4. Em produção, use HTTPS, processo supervisionado e disco persistente.
+   Sirva páginas e API na mesma origem. Configure PUBLIC_ORIGIN.
+5. A chave OpenAI/Google pode ser conectada no módulo Assistente de conteúdo
+   após entrar com credencial de administrador.
 
-DEPOIS, PARA O QR DO CRACHA FUNCIONAR
-  O QR aponta para https://centeronibus.com.br/v
-  Enquanto esse endereco nao existir, o QR abre uma pagina que nao carrega.
+Os QR novos apontam para /v/ do domínio do portal. Para outro endereço,
+configure VALIDATOR_URL no ambiente durante o build. Preserve a rota antiga
+para os crachás já impressos.
 
-  Duas saidas:
-   a) publicar a pasta v/ em centeronibus.com.br/v (é so HTML estatico), ou
-   b) trocar URL_VALIDADOR em build/core.py para o endereco do GitHub Pages
-      https://commet-pro.github.io/ecosyscenter/v
-      e rodar python3 build/build.py de novo.
+A chave privada não está no GitHub. O campo sec_b64 do arquivo que está
+com o RH deve ir somente para BADGE_SECRET_B64 no servidor.
+Quem mantiver uma cópia antiga da privada ainda consegue emitir por fora;
+impedir isso exige rotação do par e reemissão dos crachás.
 
-  A opcao (a) é a boa a longo prazo: o QR impresso no cracha nao muda mais.
-
-A CHAVE DE EMISSAO
-  Esta na pasta chave-de-emissao, FORA do repositorio, e tem que continuar
-  fora. Leia o LEIA-ME.txt de la.
+Este repositório não contém o CMS do site principal da Center.
+O blog será servido em /blog/ no domínio onde este servidor for instalado.

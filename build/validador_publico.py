@@ -16,12 +16,13 @@ function cartao(ok,titulo,corpo){
 
 function validar(){
   const res=document.getElementById('res');
-  const cru=decodeURIComponent(location.hash.slice(1) || location.search.slice(1) || '');
+  let cru;try{cru=decodeURIComponent(location.hash.slice(1) || location.search.slice(1) || '');}catch{return res.innerHTML=cartao(false,'Código malformado','');}
   const i=cru.indexOf('CO1.');
   if(i<0) return res.innerHTML=cartao(false,'Nada para validar',
     `<p class="meta">Abra esta página escaneando o QR do verso de um crachá
      Center Ônibus.</p>`);
   const p=cru.slice(i).split('.');
+  if(p.length!==3) return res.innerHTML=cartao(false,'Código malformado','');
   let ok=false, campos=[];
   try{
     const carga=b64uBytes(p[1]);
@@ -35,7 +36,8 @@ function validar(){
   const [nome,cargo,val]=campos;
   let vencido=false;
   const m=/^(\d{2})\/(\d{4})$/.exec(val||'');
-  if(m) vencido = new Date() >= new Date(+m[2], +m[1], 1);
+  if(campos.length!==3 || !nome || !cargo || !m || +m[1]<1 || +m[1]>12) return res.innerHTML=cartao(false,'Dados do crachá inválidos','');
+    vencido = new Date() >= new Date(+m[2], +m[1], 1);
   res.innerHTML=cartao(!vencido, vencido?'Crachá vencido':'Crachá autêntico',
     `<div class="nome">${esc(nome)}</div>
      <div class="cargo">${esc(cargo)}</div>

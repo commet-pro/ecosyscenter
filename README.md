@@ -1,162 +1,174 @@
 # Ecossistema Center Ônibus
 
-Portal de módulos internos da **Center Ônibus**. Cada peça da operação vira um
-módulo aqui dentro. Tudo roda no navegador — site estático, sem servidor, sem
-banco. Nenhum dado de funcionário ou de cliente sai do computador de quem usa.
+Portal da Center Ônibus, por Commet. Cartão de visita, crachá, validação pública,
+editor de e-mail e assistente de conteúdo com pesquisa na web.
 
-Feito pela [Commet](https://commet.pro).
+## Produção no Netlify
 
----
+O autodeploy usa a branch `main`. O domínio do portal é
+`https://intranet.centeronibus.com.br`. O build publica `dist/` e as funções em
+`netlify/functions/`, com Node 24 e a biblioteca oficial `@netlify/blobs`.
 
-## O que está no ar
+As funções oferecem emissão rastreada, auditoria, configuração de IA e blog.
+Os dados ficam no Netlify Blobs com consistência forte, separados de previews.
+Configure `BADGE_SECRET_B64`, `OPERATORS_JSON`, `SETTINGS_KEY`, `PUBLIC_ORIGIN`
+e `CENTER_ENV=production` como variáveis privadas do site no contexto production.
+Nunca coloque esses valores no repositório ou na pasta `dist`.
 
-| Categoria | Módulo | Rota |
-| :-- | :-- | :-- |
-| Marca e Marketing | Cartão de visita | `/marketing/cartao/` |
-| Marca e Marketing | Crachá | `/marketing/cracha/` |
-| Marca e Marketing | Validador de crachá | `/marketing/validador/` |
-| — | Validação pública (destino do QR) | `/v/` |
+A pesquisa de IA roda em uma Background Function. O painel acompanha o trabalho;
+se fechar a aba, o processamento continua e o artigo aparece ao atualizar a lista.
+A função agendada verifica a hora de Brasília a cada hora e inicia no máximo uma
+geração diária, com trava atômica contra duplicação. A agenda fica desativada até
+o administrador conectar a API e habilitá-la. Trabalhos falhos não são repetidos
+automaticamente; consulte a auditoria antes de tentar novamente. Execuções manuais
+são limitadas a uma por minuto por operador. A busca também evita títulos repetidos.
 
-As categorias **Comercial**, **Pessoas** e **Operações** já aparecem no portal
-com os módulos previstos marcados como *em breve*. O roadmap fica visível para
-quem abre o site, e cada módulo novo é só uma pasta a mais.
+No Netlify, não se usa o SQLite local nem um processo Node sempre ligado. O modo
+local descrito abaixo continua disponível para desenvolvimento. Os limites de
+instância única/disco do modo local não se aplicam ao adaptador do Netlify.
 
----
+## Executar
 
-## Publicar
+Requer Node.js 24 ou superior e Python 3 para gerar as páginas. Para as funções
+do Netlify, instale as dependências com `npm ci`.
 
-O site é servido da **raiz do repositório**. Em *Settings → Pages*, apontar para
-a branch `main`, pasta `/ (root)`. O `.nojekyll` já está lá para o GitHub não
-tentar processar nada.
-
-Para servir localmente:
-
-```bash
-python3 -m http.server 8000     # abre em http://localhost:8000
+```sh
+python build/build.py
+node server/create-access.mjs rafa admin
 ```
 
----
+O segundo comando gera uma credencial individual e seu hash, além de uma chave
+para criptografar a configuração da IA. Entregue a credencial por canal privado;
+coloque somente o registro com hash em `OPERATORS_JSON`. Copie `.env.example`
+para `.env`, preencha os valores e execute:
 
-## Como isso é construído
-
-O HTML **não é escrito à mão** — é gerado. Para mexer em qualquer página, mexa
-no `build/` e rode o build de novo:
-
-```bash
-python3 build/build.py
+```sh
+node --env-file=.env server/index.mjs
 ```
 
+Abra http://localhost:8000. Em produção, configure `PUBLIC_ORIGIN`, use HTTPS,
+um processo supervisionado e armazenamento persistente privado para `DATA_DIR`.
+A API e as páginas devem ficar na mesma origem. O servidor só disponibiliza
+as páginas e os ativos permitidos; `.env`, servidor, fontes e banco ficam privados.
+
+## Chave do crachá
+
+A chave **pública de validação** está em `build/chave-publica.json`:
+
+`3wl9XPhQhpsfGkBQan0wfHKDCknCGqxFeKiQJ5jw0mc`
+
+Ela valida assinaturas Ed25519 e não permite emitir. A **privada de emissão** é
+o campo `sec_b64` do arquivo `chave-emissao.json`, entregue ao RH fora do
+repositório. O repositório versionado não contém esse arquivo, e a privada não pode ser
+recuperada a partir da pública. Configure seu valor em `BADGE_SECRET_B64` no
+servidor, nunca no HTML ou GitHub. O servidor verifica se o par corresponde.
+
+O módulo Crachá agora usa uma credencial por operador, com papel `issuer` ou
+`admin`. A assinatura acontece exclusivamente na API, antes da impressão. Cada
+emissão registra horário UTC do servidor, operador, IP observado, navegador,
+latitude, longitude, precisão e hash dos dados assinados. O CPF e a foto não são
+enviados. A localização exige permissão e HTTPS (localhost também funciona);
+se for recusada, a emissão é bloqueada. O painel de auditoria exibe Brasília.
+
+IP é o endereço observado pelo servidor, normalmente público/NAT, não o IP da
+rede local do computador. Coordenadas do navegador podem ser simuladas: são
+rastros, não prova de identidade. A autorização vem da credencial individual.
+Remova o operador de `OPERATORS_JSON` e reinicie para revogar acesso. Credenciais
+são equivalentes a senhas; não compartilhe. Não ficam em armazenamento local.
+
+`TRUST_PROXY=true` só é seguro quando o proxy sobrescreve `X-Real-IP` e impede
+conexões diretas ao Node. Por padrão, cabeçalhos enviados pelo cliente são ignorados.
+
+Crachás CO1 existentes continuam válidos. A validação é pública, local, sem
+chave privada e sem rastrear visitantes. A assinatura não comprova vínculo
+atual nem implementa revogação por funcionário. **Quem ainda tiver a antiga
+chave privada consegue assinar por fora da API.** Para encerrar esse acesso,
+rotacione o par, atualize `build/chave-publica.json`, configure a nova privada,
+reconstrua e reemita os crachás. A rotação invalida assinaturas antigas; não foi
+feita automaticamente. O arquivo privado nunca deve voltar ao navegador.
+
+O QR novo aponta para `/v/` da origem atual. Para outro domínio, defina
+`VALIDATOR_URL=https://seu-dominio/v/` durante o build. Preserve no domínio antigo
+a rota de validação dos crachás já impressos.
+
+## Assistente de conteúdo
+
+Abra `/marketing/assistente/`. Um administrador conecta a chave OpenAI ou
+Google AI Studio, escolhe o identificador de um modelo com pesquisa web,
+define o tema e a hora diária em Brasília. A chave é criptografada com AES-256-GCM
+no banco; `SETTINGS_KEY` é o segredo de 32 bytes base64 do servidor. Faça backup
+dessa chave e do banco; perder a chave impede abrir as configurações antigas.
+
+Papéis: `admin` configura e consulta auditoria; `editor` gera, lê e publica
+artigos; `issuer` emite crachás. Um operador pode ter mais de um papel.
+
+A integração usa [Responses + web_search da OpenAI](https://developers.openai.com/api/docs/guides/tools-web-search)
+ou [Google Search grounding do Gemini](https://ai.google.dev/gemini-api/docs/google-search).
+A conta de API é sua: o login do ChatGPT/Codex não fornece uma chave para o site.
+O custo de pesquisas e geração será cobrado pelo provedor escolhido.
+
+O agente pesquisa e salva título, descrição, parágrafos e fontes retornadas
+pelo provedor. Sem fontes, a geração falha. Dados retornados são tratados como
+texto e escapados na publicação. Conteúdo com alegações técnicas fica em
+rascunho; a detecção depende do modelo, então não substitui revisão humana.
+Não inventa estoque, preços, certificações ou compatibilidades no prompt.
+
+A geração diária fica desativada até ser habilitada. A publicação automática
+também é opcional; quando ativa, publica artigos classificados pelo modelo como
+sem afirmações técnicas. O editor pode revisar e publicar rascunhos pelo painel.
+
+O agendador verifica a cada minuto e reivindica uma execução por dia no banco.
+Roda a partir da hora configurada, inclusive após reinício no mesmo dia. Falhas
+ficam na auditoria e não são repetidas automaticamente naquele dia, para evitar
+cobranças duplicadas; use “Pesquisar e criar agora” para tentar novamente.
+A instância precisa permanecer ligada. Use apenas **uma instância** com disco
+persistente; não é um serviço para múltiplas réplicas ou hospedagem serverless.
+
+As publicações são HTML no servidor, em `/blog/`, com título, descrição,
+canonical, Article JSON-LD, fontes, `/sitemap.xml` e `/robots.txt`.
+Este repositório não contém o CMS do site principal da Center. Para que os
+artigos estejam em centeronibus.com.br, instale este servidor no domínio ou
+encaminhe `/blog/`, `/sitemap.xml` e `/robots.txt` para ele, adaptando robots e
+sitemap existentes. Não há integração automática com outro CMS. SEO depende da
+qualidade, descoberta e indexação; não há garantia de posicionamento.
+
+## Build e publicação estática
+
+As páginas são geradas em Python. Edite `build/` e rode `python build/build.py`.
+O build escreve páginas na raiz e copia só páginas e ativos para `dist/`.
+Netlify está configurado para publicar `dist`, sem código do servidor ou dados.
+Uma publicação puramente estática oferece os materiais e a validação pública,
+mas **não oferece emissão, auditoria, assistente nem blog dinâmico**.
+Não publique a raiz do checkout em um servidor de arquivos genérico depois de
+configurar segredos. Para todos os módulos, use o servidor Node acima.
+
+## Verificação
+
+```sh
+npm test
 ```
-build/
-  core.py                marca, paleta, CSS e JS compartilhados, catálogo de módulos
-  portal.py              a página inicial, com as categorias
-  mod_cartao.py          \
-  mod_cracha.py           >  um arquivo por módulo
-  mod_validador.py       /
-  validador_publico.py   a página /v, destino do QR
-  build.py               roda todos
-  chave-publica.json     só a chave pública (a privada nunca entra aqui)
-  montadoras.json        os logos das carroçarias, já posicionados
-```
 
-Fonte, biblioteca e arte da marca ficam em `assets/` e **não são regeradas** —
-o build só escreve o que é código. Por isso as páginas são pequenas (3 a 44 KB)
-e o navegador guarda o resto em cache.
+Os testes cobrem autenticação/revogação, assinatura Ed25519, obrigatoriedade de
+localização, auditoria e IP, bloqueio de arquivos privados, configuração sem
+exposição da chave, fontes de IA, sintaxe de páginas e validade dos crachás.
+As integrações externas são simuladas: um teste real requer sua chave e saldo.
 
-### Acrescentar um módulo
+## Impressão e ativos
 
-1. `build/mod_<nome>.py` com uma função `build()`
-2. registrar o módulo em `CATEGORIAS`, no `core.py`
-3. somar à lista `MODULOS` do `build.py` e rodar
+Cartões: 90 × 50 mm; crachás: 54 × 86 mm. Modos peça única e A4, com frente e
+verso e marcas de corte. Imprima em 100%, sem margens, com fundos habilitados.
+Fotos são mantidas por item da lista; aguarda fontes e imagens antes de imprimir.
 
-O `base.js` já cuida de prévia, lista, margens e impressão — o módulo só
-descreve os campos e as faces em SVG.
+As artes oficiais em `assets/marca/` são preservadas. Fontes Archivo Condensed
++ Inter (SIL OFL); QRCode (MIT), TweetNaCl (domínio público), jsQR (Apache 2.0).
 
----
+## Operação e limites
 
-## A marca
+Faça backup do SQLite e proteja o acesso ao disco. Auditoria é persistente, mas
+não é imutável contra administradores do servidor. Defina a retenção dos registros
+de IP/localização conforme a política da empresa. Não há MFA, geofencing,
+revogação por funcionário ou integração com o CMS externo nesta versão.
 
-Tudo segue o **Manual de Marca v1.0 (agosto/2026)**. As artes em `assets/marca/`
-são **recortadas do manual**, nunca redesenhadas: o que se fez foi remover o
-fundo chapado (ver `marca/prep_assinatura.py` e `marca/prep.py`).
-
-Reduções mínimas, respeitadas em código com `assert`:
-
-| Versão | Mínimo | Onde |
-| :-- | :-- | :-- |
-| assinatura completa (com descritor) | 30 mm | — |
-| assinatura reduzida (sem descritor) | 20 mm | cartão 46/28 mm · crachá 32 mm no verso |
-| símbolo isolado | 8 mm | crachá 13,5 mm na tarja da frente |
-
-Regras do manual que valem para qualquer peça nova: nunca recriar a assinatura,
-nunca redigitar o nome, nunca reaplicar degradê ou sombra, um vermelho por peça,
-uma diagonal por peça, não aplicar sobre foto sem tarja.
-
-**Pendência:** o manual diz que existe vetor mestre, mas o que chegou foi o PDF
-raster. Para cartão e crachá sobra (a assinatura sai acima de 600 dpi). Para
-bordado, serigrafia e frota, pedir o vetor à Center.
-
----
-
-## A chave do crachá
-
-O QR do verso carrega `NOME|CARGO|MM/AAAA` assinado em **Ed25519**. O validador
-confere com a chave pública — a conferência é matemática e local, funciona no
-modo avião e continua funcionando daqui a dez anos sem depender de servidor.
-
-**A chave privada não está neste repositório e não pode estar.** O site é
-público: se a chave estivesse aqui, qualquer pessoa emitiria crachá válido e a
-validação perderia o sentido.
-
-Como funciona na prática:
-
-- `build/chave-publica.json` — só a pública. Pode circular à vontade.
-- Quem emite recebe `chave-emissao.json` por fora e **carrega no módulo Crachá**,
-  uma vez por sessão. A chave fica **só na memória da aba**: não vai para disco,
-  não vai para o servidor, e some ao fechar.
-- Sem chave carregada, o QR não é gerado e a impressão fica travada.
-- Se o arquivo não corresponder à chave pública do site, a página recusa.
-
-Se a privada vazar: gerar um par novo, trocar `build/chave-publica.json`,
-rodar o build e reemitir os crachás.
-
-### Os dois limites que continuam valendo
-
-1. **Quem tem a chave emite.** Enquanto o arquivo ficar com o RH, tudo bem. O
-   passo seguinte é assinar num servidor — o formato do QR não muda.
-2. **Assinatura não é revogação.** Desligamento não invalida o crachá antes do
-   vencimento. Mitigação hoje: validade curta. Mitigação prevista: o módulo
-   *Lista de revogados*, na categoria Pessoas.
-
-**O CPF não entra no QR, de propósito.** Fica só impresso, para facilitar acesso
-onde pedem documento. Quem escaneia vê nome, cargo e validade — não vê o CPF.
-
----
-
-## Impressão
-
-Os módulos de peça imprimem em dois modos:
-
-- **Peça única** — uma face por página no tamanho exato, para a gráfica
-- **Folha A4** — 10 cartões ou 9 crachás por folha, com marcas de corte, em
-  folhas de frente e de verso já espelhadas para o duplex bater
-
-Em ambos: *Margens: Nenhuma*, *Escala: 100 %*, *Gráficos de plano de fundo*
-marcado.
-
----
-
-## Licenças de terceiros
-
-`assets/vendor/` traz três bibliotecas, todas embutidas e sem CDN:
-
-| Arquivo | O que é | Licença |
-| :-- | :-- | :-- |
-| `qrcode.js` | gerador de QR, de Kazuhiko Arase | MIT |
-| `nacl-fast.min.js` | TweetNaCl, assinatura Ed25519 | domínio público |
-| `jsQR.js` | leitura de QR pela câmera | Apache 2.0 |
-
-Tipografia: **Archivo Condensed** e **Inter**, ambas SIL Open Font License.
-
-Os logos das carroçarias na frente do cartão são marcas de terceiros, usadas
-com autorização informada pela Center Ônibus.
+Rotação realizada em 13/10/2026, autorizada por Rafa antes de qualquer emissão.
+O novo par está configurado no `.env` local; publique as páginas regeneradas
+e configure `BADGE_SECRET_B64` no ambiente de produção para efetivar a troca.
