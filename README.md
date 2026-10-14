@@ -136,11 +136,12 @@ qualidade, descoberta e indexação; não há garantia de posicionamento.
 
 As páginas são geradas em Python. Edite `build/` e rode `python build/build.py`.
 O build escreve páginas na raiz e copia só páginas e ativos para `dist/`.
-Netlify está configurado para publicar `dist`, sem código do servidor ou dados.
+No Netlify, `dist` contém apenas páginas e ativos; o código de servidor é
+empacotado separadamente nas funções, e os dados ficam no Blobs.
 Uma publicação puramente estática oferece os materiais e a validação pública,
 mas **não oferece emissão, auditoria, assistente nem blog dinâmico**.
 Não publique a raiz do checkout em um servidor de arquivos genérico depois de
-configurar segredos. Para todos os módulos, use o servidor Node acima.
+configurar segredos. Para todos os módulos, use o adaptador do Netlify ou o servidor Node local.
 
 ## Verificação
 

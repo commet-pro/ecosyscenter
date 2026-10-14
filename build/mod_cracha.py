@@ -133,7 +133,7 @@ MODULO = {                      /* a variável já existe no base.js */
     const marcar=(classe,msg)=>{ cx.className='chave '+classe; txt.textContent=msg;
       document.querySelectorAll('[data-precisa-chave]')
               .forEach(b=>b.disabled=(classe!=='ok')); };
-    marcar('','Chave não carregada');
+    marcar('','Acesso não conectado');
 
     const script=document.createElement('script');script.src=BASE+'assets/access.js';
     document.getElementById('cracha-entrar').disabled=true;

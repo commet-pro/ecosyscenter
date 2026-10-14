@@ -98,8 +98,8 @@ def build():
     assinatura reduzida acima de 20 mm, símbolo isolado acima de 8 mm, cores
     chapadas, sem degradê nem sombra. As artes são recortadas do manual, nunca
     redesenhadas.<br>
-    <b>Crachá.</b> A validação usa assinatura Ed25519 conferida offline. A chave
-    privada não mora neste site: quem emite carrega o arquivo dela na hora.<br>
+    <b>Crachá.</b> A validação usa assinatura Ed25519 conferida offline. A emissão
+    exige acesso individual; a chave privada fica no servidor e o uso é registrado.<br>
     <b>Ecossistema Center Ônibus</b> · v{C.VERSAO} · {C.DATA} · feito pela Commet.
   </div>
 </div>"""
