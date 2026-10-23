@@ -8,7 +8,7 @@ export function cloudApp({store,env,publicKey,request=fetch,generateArticle=gene
   const read=key=>store.get(key,{type:'json'});
   const write=(key,v,opts)=>store.setJSON(key,v,opts);
   const response=(status,data,type='application/json')=>new Response(type==='application/json'?JSON.stringify(data):data,{status,headers:{'Content-Type':type+'; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'}});
-  async function audit(actor,action,ip,detail={}){const at=now().toISOString();await write(`audit/${at}/${randomUUID()}`,{at,actor,action,ip,detail:JSON.stringify(detail)});}
+  async function audit(actor,action,ip,detail={}){const at=now().toISOString(),row={at,actor,action,ip,detail:JSON.stringify(detail)};await write(`audit/${at}/${randomUUID()}`,row);return row;}
   async function entries(prefix,limit=100){const {blobs}=await store.list({prefix});return (await Promise.all(blobs.map(b=>b.key).sort().reverse().slice(0,limit).map(read))).filter(Boolean);}
   function seal(value){const iv=randomBytes(12),c=createCipheriv('aes-256-gcm',master(),iv);return {iv:iv.toString('base64'),data:Buffer.concat([c.update(JSON.stringify(value)),c.final()]).toString('base64'),tag:c.getAuthTag().toString('base64')};}
   async function settings(){const v=await read('settings');if(!v)return null;const d=createDecipheriv('aes-256-gcm',master(),Buffer.from(v.iv,'base64'));d.setAuthTag(Buffer.from(v.tag,'base64'));return JSON.parse(Buffer.concat([d.update(Buffer.from(v.data,'base64')),d.final()]).toString());}
@@ -56,7 +56,7 @@ export function cloudApp({store,env,publicKey,request=fetch,generateArticle=gene
       const role=r=>{if(!user.roles?.some(v=>v===r||v==='admin'))throw Object.assign(Error('Você não tem autorização para este módulo.'),{status:403});};
       const body=async()=>{const raw=await req.text();if(Buffer.byteLength(raw)>32768)throw Error('Pedido muito grande.');return JSON.parse(raw||'{}');};
       if(path==='/api/me'&&req.method==='GET'){await audit(actor,'access.connected',ip);return response(200,{id:user.id,name:user.name,email:user.email,roles:user.roles});}
-      if(path==='/api/audit'&&req.method==='GET'){role('admin');return response(200,await entries('audit/',200));}
+      if(path==='/api/audit'&&req.method==='GET'){role('admin');const ref=new URL(req.url).searchParams.get('issuanceId');if(ref){if(!/^[A-Za-z0-9_-]{16}$/.test(ref))throw Error('Referência de emissão inválida.');const row=await read('issuances/'+ref);return response(200,row?[row]:[]);}return response(200,await entries('audit/',200));}
       if(path==='/api/events'&&req.method==='POST'){
         const v=await body(),actions=['material.print','material.list.add','material.list.remove','email.export'];
         if(!actions.includes(v.action)||!['cartao','cracha','template-email'].includes(v.module)||!Number.isInteger(v.count)||v.count<0||v.count>1000)throw Error('Evento inválido.');
@@ -65,7 +65,7 @@ export function cloudApp({store,env,publicKey,request=fetch,generateArticle=gene
       }
       if(path==='/api/badges/sign'&&req.method==='POST'){role('issuer');const v=await body(),geo=location(v.location),payload=badge(v,now()),key=signingKey(env.BADGE_SECRET_B64,publicKey);
         const issuanceId=randomBytes(12).toString('base64url'),signedPayload=payload+'|ID='+issuanceId;
-        const signed=token(signedPayload,key);await audit(actor,'badge.sign',ip,{issuanceId,location:geo,payloadHash:hash(signedPayload),userAgent:(req.headers.get('User-Agent')||'').slice(0,300)});return response(200,{token:signed});}
+        const signed=token(signedPayload,key),row=await audit(actor,'badge.sign',ip,{issuanceId,location:geo,payloadHash:hash(signedPayload),userAgent:(req.headers.get('User-Agent')||'').slice(0,300)});await write('issuances/'+issuanceId,row,{onlyIfNew:true});return response(200,{token:signed});}
       if(path==='/api/ai/config'){
         role('admin');const old=await settings();
         if(req.method==='GET')return response(200,old?{...old,key:undefined,connected:true}:{connected:false});

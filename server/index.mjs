@@ -49,7 +49,7 @@ const server=http.createServer(async(req,res)=>{
       const allowed=role=>user.roles?.includes(role)||user.roles?.includes('admin');
       const requireRole=role=>{if(!allowed(role))throw Object.assign(Error('Você não tem autorização para este módulo.'),{status:403});};
       if(req.method==='GET'&&path==='/api/me'){audit(actor,'access.connected',ip);return send(res,200,{id:user.id,roles:user.roles});}
-      if(req.method==='GET'&&path==='/api/audit'){requireRole('admin');return send(res,200,db.prepare('SELECT * FROM audit ORDER BY id DESC LIMIT 200').all());}
+      if(req.method==='GET'&&path==='/api/audit'){requireRole('admin');const ref=new URL(req.url,'http://local').searchParams.get('issuanceId');if(ref){if(!/^[A-Za-z0-9_-]{16}$/.test(ref))throw Error('Referência de emissão inválida.');return send(res,200,db.prepare("SELECT * FROM audit WHERE json_extract(detail,'$.issuanceId')=? ORDER BY id DESC").all(ref));}return send(res,200,db.prepare('SELECT * FROM audit ORDER BY id DESC LIMIT 200').all());}
       if(req.method==='POST'&&path==='/api/badges/sign') {
         requireRole('issuer');const v=await body(req),geo=location(v.location),payload=badge(v);
         const key=signingKey(process.env.BADGE_SECRET_B64,JSON.parse(readFileSync(resolve(root,'build/chave-publica.json'),'utf8')).pub_b64);

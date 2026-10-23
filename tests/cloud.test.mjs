@@ -50,4 +50,6 @@ test('cada emissão tem referência única e rastreável mesmo com os mesmos dad
  const second=await(await f.api('badges/sign',data,'issuer-credential')).json();assert.notEqual(first.token,second.token);
  const signed=Buffer.from(first.token.split('.')[1],'base64url').toString();const id=signed.split('|')[3];assert.match(id,/^ID=[A-Za-z0-9_-]{16}$/);
  const audit=await(await f.api('audit')).json();const row=audit.find(r=>JSON.parse(r.detail).issuanceId===id.slice(3));assert.equal(row.actor,'rh');assert.equal(JSON.parse(row.detail).payloadHash,hash(signed));
+ const found=await(await f.api('audit?issuanceId='+id.slice(3))).json();assert.equal(found.length,1);assert.equal(found[0].actor,'rh');
+ assert.equal((await f.api('audit?issuanceId='+id.slice(3),undefined,'issuer-credential')).status,403);
 });
