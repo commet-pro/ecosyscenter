@@ -1,5 +1,6 @@
 import {login,logout,getUser,getSettings,handleAuthCallback,acceptInvite,updateUser,requestPasswordRecovery} from '@netlify/identity';
 import {authErrorMessage,normalizeEmail} from './auth-errors.mjs';
+import {completeInvite} from './invite-session.mjs';
 const byId=id=>document.getElementById(id);
 const message=text=>{const e=byId('login-status');if(e)e.textContent=text;};
 const next=()=>{const value=new URLSearchParams(location.search).get('next')||'/';return /^\/(?!\/)/.test(value)&&!value.includes('\\')&&!value.startsWith('/login')?value:'/';};
@@ -22,7 +23,7 @@ async function start(){
       message('Use uma senha exclusiva de pelo menos 12 caracteres.');
       byId('new-password-form').onsubmit=e=>{e.preventDefault();action(async()=>{
         const password=byId('new-password').value;if(password.length<12||password!==byId('confirm-password').value)throw Error('As senhas precisam ser iguais e ter pelo menos 12 caracteres.');
-        if(callback.type==='invite')await acceptInvite(callback.token,password);else await updateUser({password});
+        if(callback.type==='invite')await completeInvite(callback.token,password,{acceptInvite,login});else await updateUser({password});
         byId('new-password').value='';byId('confirm-password').value='';
         await CenterAccess.request('me');location.assign(next());
       });};
