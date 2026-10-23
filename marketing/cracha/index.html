@@ -120,8 +120,8 @@ MODULO = {                      /* a variável já existe no base.js */
   verso(v){
     const url=MODULO.urlValidacao(v);
     const qr = url
-      ? qrPath(url,14.0,25.5,26.0)
-      : `<rect x="14.0" y="25.5" width="26.0" height="26.0" fill="none"
+      ? qrPath(url,12.0,23.5,30.0)
+      : `<rect x="12.0" y="23.5" width="30.0" height="30.0" fill="none"
            stroke="#c9cfd6" stroke-width=".3" stroke-dasharray="1.4 1.4"/>
          ${T(27,37.3,'QR DE VALIDAÇÃO',1.05,{w:600,ls:.16,fill:'#98a2ae',a:'middle'})}
          ${T(27,40.1,'AGUARDANDO EMISSÃO',1.05,{w:600,ls:.16,fill:'#98a2ae',a:'middle'})}`;

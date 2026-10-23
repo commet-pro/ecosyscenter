@@ -53,8 +53,9 @@ const server=http.createServer(async(req,res)=>{
       if(req.method==='POST'&&path==='/api/badges/sign') {
         requireRole('issuer');const v=await body(req),geo=location(v.location),payload=badge(v);
         const key=signingKey(process.env.BADGE_SECRET_B64,JSON.parse(readFileSync(resolve(root,'build/chave-publica.json'),'utf8')).pub_b64);
-        const signed=token(payload,key);
-        audit(actor,'badge.sign',ip,{location:geo,payloadHash:hash(payload),userAgent:String(req.headers['user-agent']||'').slice(0,300)});
+        const issuanceId=randomBytes(12).toString('base64url'),signedPayload=payload+'|ID='+issuanceId;
+        const signed=token(signedPayload,key);
+        audit(actor,'badge.sign',ip,{issuanceId,location:geo,payloadHash:hash(signedPayload),userAgent:String(req.headers['user-agent']||'').slice(0,300)});
         return send(res,200,{token:signed});
       }
       if(path==='/api/ai/config') {

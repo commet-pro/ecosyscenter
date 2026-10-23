@@ -44,3 +44,10 @@ test('Netlify: registra material e rejeita nomes de eventos arbitrários',async(
  assert.equal((await f.api('events',{action:'fake.success',module:'cracha',count:2})).status,400);
  const logs=await(await f.api('audit')).json(),print=logs.find(l=>l.action==='material.print');assert.equal(print.actor,'rh');assert.equal(print.ip,'203.0.113.20');assert.equal(JSON.parse(print.detail).count,2);
 });
+test('cada emissão tem referência única e rastreável mesmo com os mesmos dados',async()=>{
+ const f=fixture(),data={nome:'Pessoa teste',cargo:'Vendas',validade:'12/2099',location:{latitude:0,longitude:0,accuracy:10}};
+ const first=await(await f.api('badges/sign',data,'issuer-credential')).json();
+ const second=await(await f.api('badges/sign',data,'issuer-credential')).json();assert.notEqual(first.token,second.token);
+ const signed=Buffer.from(first.token.split('.')[1],'base64url').toString();const id=signed.split('|')[3];assert.match(id,/^ID=[A-Za-z0-9_-]{16}$/);
+ const audit=await(await f.api('audit')).json();const row=audit.find(r=>JSON.parse(r.detail).issuanceId===id.slice(3));assert.equal(row.actor,'rh');assert.equal(JSON.parse(row.detail).payloadHash,hash(signed));
+});

@@ -22,6 +22,7 @@ test('validador recusa datas malformadas e endereço inválido',()=>{
  assert.match(validator('JOÃO|VENDAS|12/2099|extra'),/Dados do crachá inválidos/);
  assert.match(validator('JOÃO|VENDAS|12/2000'),/Crachá vencido/);
  assert.match(validator('JOÃO|VENDAS|12/2099'),/Crachá autêntico/);
+ assert.match(validator('JOÃO|VENDAS|12/2099|ID=abcdefghijklmnop'),/Referência da emissão: abcdefghijklmnop/);
  assert.match(validator('', '#%ZZ'),/Código malformado/);
  assert.match(validator('', '#CO1.a.b.c'),/Código malformado/);
 });

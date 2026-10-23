@@ -64,7 +64,8 @@ export function cloudApp({store,env,publicKey,request=fetch,generateArticle=gene
         await audit(actor,v.action,ip,{module:v.module,count:v.count});return response(200,{ok:true});
       }
       if(path==='/api/badges/sign'&&req.method==='POST'){role('issuer');const v=await body(),geo=location(v.location),payload=badge(v,now()),key=signingKey(env.BADGE_SECRET_B64,publicKey);
-        const signed=token(payload,key);await audit(actor,'badge.sign',ip,{location:geo,payloadHash:hash(payload),userAgent:(req.headers.get('User-Agent')||'').slice(0,300)});return response(200,{token:signed});}
+        const issuanceId=randomBytes(12).toString('base64url'),signedPayload=payload+'|ID='+issuanceId;
+        const signed=token(signedPayload,key);await audit(actor,'badge.sign',ip,{issuanceId,location:geo,payloadHash:hash(signedPayload),userAgent:(req.headers.get('User-Agent')||'').slice(0,300)});return response(200,{token:signed});}
       if(path==='/api/ai/config'){
         role('admin');const old=await settings();
         if(req.method==='GET')return response(200,old?{...old,key:undefined,connected:true}:{connected:false});

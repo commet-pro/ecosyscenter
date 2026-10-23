@@ -75,12 +75,13 @@ function validar(){
   const [nome,cargo,val]=campos;
   let vencido=false;
   const m=/^(\d{2})\/(\d{4})$/.exec(val||'');
-  if(campos.length!==3 || !nome || !cargo || !m || +m[1]<1 || +m[1]>12) return res.innerHTML=cartao(false,'Dados do crachá inválidos','');
+  if((campos.length!==3 && !(campos.length===4 && /^ID=[A-Za-z0-9_-]{16}$/.test(campos[3]))) || !nome || !cargo || !m || +m[1]<1 || +m[1]>12) return res.innerHTML=cartao(false,'Dados do crachá inválidos','');
     vencido = new Date() >= new Date(+m[2], +m[1], 1);
   res.innerHTML=cartao(!vencido, vencido?'Crachá vencido':'Crachá autêntico',
     `<div class="nome">${esc(nome)}</div>
      <div class="cargo">${esc(cargo)}</div>
      <p class="meta">Crachá válido até ${esc(val)}<br>
+     ${campos[3]?'Referência da emissão: '+esc(campos[3].slice(3))+'<br>':''}
      ${vencido ? 'A validade expirou — confirme com a Center Ônibus antes de liberar o acesso.'
                : 'Assinatura conferida nesta página, sem consultar servidor.'}</p>`);
 }

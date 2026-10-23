@@ -24,7 +24,9 @@ Secure, SameSite=Strict, com validade de uma hora e revogação pelo registro do
 operador. Ela não deve ser compartilhada com a equipe.
 
 Impressões, inclusão/remoção na lista, exportações, emissões e ações de IA ficam
-na auditoria com pessoa, data/hora e IP observado pelo Netlify. A emissão também
+na auditoria com pessoa, data/hora e IP observado pelo Netlify. Cada QR novo contém uma referência aleatória única que aponta para o registro
+daquela emissão, inclusive quando os dados do funcionário se repetem. Crachás
+antigos sem referência continuam sendo validados. A emissão também
 exige coordenadas e precisão do navegador. Eventos de impressão/exportação
 registram a solicitação, não comprovam a impressão física ou o download concluído.
 O app ainda não implementa cadastro permanente de funcionários nem revogação

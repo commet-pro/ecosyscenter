@@ -39,7 +39,8 @@ el('audit').onclick=()=>run(async()=>{
   const table=document.createElement('table');table.style.cssText='width:100%;border-collapse:collapse;font-size:12px';
   const head=document.createElement('tr');for(const title of ['Data e hora (Brasília)','Pessoa','Ação','IP','Detalhes']){const th=document.createElement('th');th.textContent=title;th.style.cssText='text-align:left;padding:12px 8px;border-bottom:2px solid #122B4A';head.append(th);}table.append(head);
   for(const row of rows){let detail={};try{detail=JSON.parse(row.detail||'{}');}catch{}
-    const description=detail.location?`Localização: ${detail.location.latitude}, ${detail.location.longitude} (precisão aproximada: ${Math.round(detail.location.accuracy)} m)`:detail.error||[detail.module,detail.count!==undefined?'Quantidade: '+detail.count:''].filter(Boolean).join(' · ');
+    const reference=detail.issuanceId?'Emissão '+detail.issuanceId+' · ':'';
+    const description=reference+(detail.location?`Localização: ${detail.location.latitude}, ${detail.location.longitude} (precisão aproximada: ${Math.round(detail.location.accuracy)} m)`:detail.error||[detail.module,detail.count!==undefined?'Quantidade: '+detail.count:''].filter(Boolean).join(' · '));
     const tr=document.createElement('tr');for(const text of [new Date(row.at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}),row.actor==='anonymous'?'Não identificado':row.actor,labels[row.action]||row.action,row.ip,description]){const td=document.createElement('td');td.textContent=text;td.style.cssText='padding:12px 8px;border-bottom:1px solid #dfe4e9;vertical-align:top;overflow-wrap:anywhere';tr.append(td);}table.append(tr);
   }out.append(table);status('Últimos 200 registros. Localização informada pelo navegador; não representa um trajeto ou prova de presença.');
 });

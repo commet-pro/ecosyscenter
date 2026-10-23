@@ -16,10 +16,9 @@ SIMB_FRENTE = 13.5      # mm de largura na tarja azul
 SLOT_Y      = 7.0       # nada de arte acima disto: é onde entra o furo do cordão
 ASSIN_VERSO = 32.0      # mm de largura no verso branco
 
-# 26 mm com 57 módulos dá 0,456 mm por módulo: acima do piso de 0,4 mm que o
-# celular precisa, e bem mais discreto que os 34 mm da primeira versão.
-QR_MM = 26.0
-QR_Y  = 25.5
+# Mais área para leitura do QR que agora inclui a referência única de emissão.
+QR_MM = 30.0
+QR_Y  = 23.5
 
 CAMPOS = """
   <h2>Acesso de emissão</h2>
