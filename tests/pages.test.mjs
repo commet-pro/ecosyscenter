@@ -10,6 +10,9 @@ test('scripts das oito páginas e ativos compilam',()=>{
 test('validação pública continua independente do login',()=>{
  const html=readFileSync(new URL('../v/index.html',import.meta.url),'utf8');assert.ok(!html.includes('identity.bundle.js'));assert.ok(!html.includes('assets/access.js'));
 });
+test('auditoria oferece o campo de consulta por referência',()=>{
+ const html=readFileSync(new URL('../marketing/assistente/index.html',import.meta.url),'utf8');assert.match(html,/id="audit-reference"/);
+});
 function validator(payload,hashOverride){
  const html=readFileSync(new URL('../v/index.html',import.meta.url),'utf8');
  const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];

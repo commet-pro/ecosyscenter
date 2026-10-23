@@ -17,7 +17,7 @@ def build():
 <p>Artigos com especificações ou compatibilidades ficam em rascunho para conferência. As chaves ficam criptografadas no servidor. O blog é publicado em <a href="/blog/">/blog/ deste domínio</a>.</p>
 <div class="row"><button id="save">Salvar configuração</button><button id="load" class="ghost">Carregar configuração</button></div>
 </section><section data-role="editor" hidden><h2>Artigos · editor</h2><div class="row"><button id="generate">Pesquisar e criar agora</button><button id="refresh" class="ghost">Atualizar lista</button></div><div id="articles"></div>
-</section><section data-role="admin" hidden><h2>Rastreabilidade · administrador</h2><button id="audit">Consultar registros</button><div id="audit-output" style="overflow:auto"></div></section>
+</section><section data-role="admin" hidden><h2>Rastreabilidade · administrador</h2><label for="audit-reference">Referência da emissão (opcional)</label><input id="audit-reference" maxlength="16" placeholder="Cole a referência exibida ao validar o QR"><button id="audit">Consultar registros</button><div id="audit-output" style="overflow:auto"></div></section>
 </div></main>'''
     C.escrever('marketing/assistente/index.html', C.pagina('Assistente de conteúdo — Center Ônibus', '../../', corpo, modulo_nome='Assistente de conteúdo', js='''
 const assistantScript=document.createElement('script');assistantScript.src=BASE+'assets/assistant.js';document.body.append(assistantScript);
