@@ -9,7 +9,7 @@ Diferente da versão antiga (um HTML gigante com tudo embutido), aqui o site é
 servido de arquivos separados: fonte, biblioteca e arte carregam uma vez e o
 navegador guarda em cache. As páginas ficam pequenas.
 """
-import json, os, shutil
+import json, os, shutil, hashlib
 
 BUILD = os.path.dirname(os.path.abspath(__file__))
 RAIZ  = os.path.dirname(BUILD)                 # a raiz do repositório é a raiz do site
@@ -518,7 +518,9 @@ def pagina(titulo, base, corpo, modulo_nome="", scripts=(), js="", js_antes="",
 
     Ordem dos scripts: bibliotecas → BASE e constantes da página → base.js →
     o código do módulo. Nada roda antes do que precisa existir."""
-    auth_scripts = (f'<script src="{base}assets/access.js"></script><script src="{base}assets/identity.bundle.js" defer></script>' if sessao else '')
+    with open(os.path.join(RAIZ, 'assets', 'identity.bundle.js'), 'rb') as auth_file:
+        auth_version = hashlib.sha256(auth_file.read()).hexdigest()[:12]
+    auth_scripts = (f'<script src="{base}assets/access.js"></script><script src="{base}assets/identity.bundle.js?v={auth_version}" defer></script>' if sessao else '')
     libs = "\n".join(f'<script src="{base}assets/vendor/{s}"></script>' for s in scripts)
     voltar = (f'<a class="voltar" href="{base}">← todos os módulos</a>' if base else "")
     sep = '<span class="sep"></span>' if modulo_nome else ""
