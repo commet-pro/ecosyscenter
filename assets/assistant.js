@@ -2,7 +2,7 @@ const el = id=>document.getElementById(id);
 const status = text=>{el('ai-status').textContent=text;};
 async function run(action) {
   const buttons=[...document.querySelectorAll('button')];buttons.forEach(b=>b.disabled=true);
-  try {if(el('access').value.trim())CenterAccess.credential=el('access').value.trim();el('access').value='';await action();}catch(e){status(e.message);}finally{buttons.forEach(b=>b.disabled=false);}
+  try {await action();}catch(e){status(e.message);}finally{buttons.forEach(b=>b.disabled=false);}
 }
 async function loadPosts() {
   const posts=await CenterAccess.request('posts');const box=el('articles');box.replaceChildren();
@@ -15,7 +15,6 @@ async function loadPosts() {
     box.append(section);
   }
 }
-el('connect').onclick=()=>run(async()=>{const me=await CenterAccess.request('me');el('access').value='';status('Conectado como '+me.id);await loadPosts();});
 el('load').onclick=()=>run(async()=>{const c=await CenterAccess.request('ai/config');if(c.connected){for(const id of ['provider','model','topic','hour'])el(id).value=c[id];el('enabled').checked=c.enabled;el('autoPublish').checked=c.autoPublish;}status(c.connected?'Configuração carregada.':'Conecte uma chave de API.');});
 el('save').onclick=()=>run(async()=>{const c=Object.fromEntries(['provider','model','topic','key'].map(id=>[id,el(id).value.trim()]));c.hour=+el('hour').value;c.enabled=el('enabled').checked;c.autoPublish=el('autoPublish').checked;await CenterAccess.request('ai/config',{method:'POST',body:JSON.stringify(c)});el('key').value='';status('Configuração salva.');});
 el('generate').onclick=()=>run(async()=>{
@@ -34,5 +33,14 @@ el('generate').onclick=()=>run(async()=>{
   await loadPosts();status('Artigo criado.');
 });
 el('refresh').onclick=()=>run(loadPosts);
-el('audit').onclick=()=>run(async()=>{const rows=await CenterAccess.request('audit');el('audit-output').textContent=rows.map(r=>`${new Date(r.at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})} · ${r.actor} · ${r.action} · IP ${r.ip}\n${r.detail}`).join('\n\n');status('Últimos 200 registros · horário de Brasília.');});
-el('logout').onclick=()=>{CenterAccess.credential='';el('access').value='';el('key').value='';el('articles').replaceChildren();el('audit-output').textContent='';status('Acesso encerrado.');};
+el('audit').onclick=()=>run(async()=>{
+  const rows=await CenterAccess.request('audit'),out=el('audit-output');out.replaceChildren();
+  const labels={'badge.sign':'QR de crachá gerado','material.print':'Impressão solicitada','material.list.add':'Material incluído na lista','material.list.remove':'Material removido da lista','email.export':'Exportação de e-mail solicitada','access.connected':'Acesso autenticado','access.denied':'Acesso recusado','request.failed':'Ação não concluída','ai.configure':'Configuração de IA alterada','ai.queued':'Pesquisa de IA iniciada','ai.generate':'Artigo criado','ai.failed':'Falha na pesquisa de IA','post.publish':'Artigo publicado'};
+  const table=document.createElement('table');table.style.cssText='width:100%;border-collapse:collapse;font-size:12px';
+  const head=document.createElement('tr');for(const title of ['Data e hora (Brasília)','Pessoa','Ação','IP','Detalhes']){const th=document.createElement('th');th.textContent=title;th.style.cssText='text-align:left;padding:12px 8px;border-bottom:2px solid #122B4A';head.append(th);}table.append(head);
+  for(const row of rows){let detail={};try{detail=JSON.parse(row.detail||'{}');}catch{}
+    const description=detail.location?`Localização: ${detail.location.latitude}, ${detail.location.longitude} (precisão aproximada: ${Math.round(detail.location.accuracy)} m)`:detail.error||[detail.module,detail.count!==undefined?'Quantidade: '+detail.count:''].filter(Boolean).join(' · ');
+    const tr=document.createElement('tr');for(const text of [new Date(row.at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}),row.actor==='anonymous'?'Não identificado':row.actor,labels[row.action]||row.action,row.ip,description]){const td=document.createElement('td');td.textContent=text;td.style.cssText='padding:12px 8px;border-bottom:1px solid #dfe4e9;vertical-align:top;overflow-wrap:anywhere';tr.append(td);}table.append(tr);
+  }out.append(table);status('Últimos 200 registros. Localização informada pelo navegador; não representa um trajeto ou prova de presença.');
+});
+CenterAccess.ready.then(async me=>{if(!me)return;status('Conectado como '+(me.name||me.email||me.id));try{if(me.roles.some(r=>r==='admin'||r==='editor'))await loadPosts();}catch(e){status(e.message);}});

@@ -16,10 +16,10 @@ import os, sys, shutil
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import core as C
-import mod_assistente
+import mod_assistente, mod_login
 import portal, mod_cartao, mod_cracha, mod_validador, validador_publico, mod_template_email
 
-MODULOS = [mod_assistente, portal, mod_cartao, mod_cracha, mod_validador, validador_publico, mod_template_email]
+MODULOS = [mod_login, mod_assistente, portal, mod_cartao, mod_cracha, mod_validador, validador_publico, mod_template_email]
 
 
 def main():
@@ -34,7 +34,7 @@ def main():
     # Publicação estática contém apenas páginas e ativos; nunca o servidor/dados.
     destino = os.path.join(C.RAIZ, "dist")
     os.makedirs(destino, exist_ok=True)
-    for pasta in ["assets", "marketing", "v"]:
+    for pasta in ["assets", "marketing", "v", "login"]:
         shutil.copytree(os.path.join(C.RAIZ, pasta), os.path.join(destino, pasta), dirs_exist_ok=True)
     for arquivo in ["index.html", ".nojekyll"]:
         shutil.copy2(os.path.join(C.RAIZ, arquivo), destino)

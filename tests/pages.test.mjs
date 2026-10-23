@@ -2,10 +2,10 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-const pages=['index.html','marketing/cartao/index.html','marketing/cracha/index.html','marketing/validador/index.html','marketing/template-email/index.html','marketing/assistente/index.html','v/index.html'];
-test('scripts das sete páginas e ativos compilam',()=>{
+const pages=['login/index.html','index.html','marketing/cartao/index.html','marketing/cracha/index.html','marketing/validador/index.html','marketing/template-email/index.html','marketing/assistente/index.html','v/index.html'];
+test('scripts das oito páginas e ativos compilam',()=>{
  for(const path of pages){const html=readFileSync(new URL('../'+path,import.meta.url),'utf8');for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(m[1],{filename:path});}
- for(const path of ['assets/base.js','assets/access.js','assets/assistant.js'])new vm.Script(readFileSync(new URL('../'+path,import.meta.url),'utf8'),{filename:path});
+ for(const path of ['assets/base.js','assets/access.js','assets/assistant.js','assets/identity.bundle.js'])new vm.Script(readFileSync(new URL('../'+path,import.meta.url),'utf8'),{filename:path});
 });
 function validator(payload,hashOverride){
  const html=readFileSync(new URL('../v/index.html',import.meta.url),'utf8');

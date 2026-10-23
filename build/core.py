@@ -42,8 +42,8 @@ MONT_SVG = "".join(
     f'<g transform="translate({v["tx"]},{v["ty"]}) scale({v["s"]})">{v["body"]}</g>'
     for v in json.load(open(f"{BUILD}/montadoras.json", encoding="utf-8")).values())
 
-VERSAO = "3.0"
-DATA   = "13/10/2026"
+VERSAO = "3.1"
+DATA   = "23/10/2026"
 
 
 # --------------------------------------------------------------- catálogo
@@ -444,6 +444,7 @@ async function montarImpressao(itens){
 async function imprimir(itens){
   if (MODULO.podeImprimir && !MODULO.podeImprimir()) return;
   try {
+    if(window.CenterAccess?.user)await CenterAccess.track('material.print',MODULO.id,itens.length);
     if(MODULO.preparar) await MODULO.preparar(itens);
     await montarImpressao(itens);
     await document.fonts.ready;
@@ -482,8 +483,12 @@ async function preview(){
 
 function imprimirUm(){ imprimir([dados()]); }
 function imprimirLista(){ imprimir(lista.length?lista:[dados()]); }
-function adicionar(){ lista.push({...dados(),_foto:MODULO.foto}); refresh(); }
-function remover(i){ lista.splice(i,1); refresh(); }
+async function adicionar(){
+  try{if(window.CenterAccess?.user)await CenterAccess.track('material.list.add',MODULO.id);lista.push({...dados(),_foto:MODULO.foto});refresh();}catch(e){alert('Não foi possível registrar a ação: '+e.message);}
+}
+async function remover(i){
+  try{if(window.CenterAccess?.user)await CenterAccess.track('material.list.remove',MODULO.id);lista.splice(i,1);refresh();}catch(e){alert('Não foi possível registrar a ação: '+e.message);}
+}
 function refresh(){
   document.getElementById('lista').innerHTML = lista.map((v,i) =>
     `<div><span><b>${esc(v.nome)}</b> — ${esc(v.cargo)}</span>
@@ -508,11 +513,12 @@ function iniciar(mod){
 
 # ------------------------------------------------------------------ HTML
 def pagina(titulo, base, corpo, modulo_nome="", scripts=(), js="", js_antes="",
-           descricao=""):
+           descricao="", sessao=True):
     """Esqueleto de página. `base` é o caminho relativo até a raiz do site.
 
     Ordem dos scripts: bibliotecas → BASE e constantes da página → base.js →
     o código do módulo. Nada roda antes do que precisa existir."""
+    auth_scripts = (f'<script src="{base}assets/access.js"></script><script src="{base}assets/identity.bundle.js" defer></script>' if sessao else '')
     libs = "\n".join(f'<script src="{base}assets/vendor/{s}"></script>' for s in scripts)
     voltar = (f'<a class="voltar" href="{base}">← todos os módulos</a>' if base else "")
     sep = '<span class="sep"></span>' if modulo_nome else ""
@@ -528,11 +534,14 @@ def pagina(titulo, base, corpo, modulo_nome="", scripts=(), js="", js_antes="",
 <link rel="icon" href="{base}assets/marca/simbolo-cor.png">
 </head>
 <body>
+{auth_scripts}
 <header>
   <a href="{base or '#'}"><img class="logo" src="{base}assets/marca/assinatura-reduzida-neg.png"
      alt="Center Ônibus"></a>
   {sep}<span class="mod">{modulo_nome}</span>
   {voltar}
+  <span id="session-name" style="font-size:11px;margin-left:auto"></span>
+  <button id="session-logout" type="button" style="width:auto;padding:6px 10px" {'hidden' if 'login' in titulo.lower() or titulo.startswith('Entrar') else ''}>Sair</button>
 </header>
 {corpo}
 {libs}

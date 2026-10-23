@@ -9,18 +9,20 @@
 <link rel="icon" href="../../assets/marca/simbolo-cor.png">
 </head>
 <body>
+<script src="../../assets/access.js"></script><script src="../../assets/identity.bundle.js" defer></script>
 <header>
   <a href="../../"><img class="logo" src="../../assets/marca/assinatura-reduzida-neg.png"
      alt="Center Ônibus"></a>
   <span class="sep"></span><span class="mod">Assistente de conteúdo</span>
   <a class="voltar" href="../../">← todos os módulos</a>
+  <span id="session-name" style="font-size:11px;margin-left:auto"></span>
+  <button id="session-logout" type="button" style="width:auto;padding:6px 10px" >Sair</button>
 </header>
 <main class="portal" style="display:block">
 <h1>Assistente de conteúdo</h1><p>Pesquisa com fontes para criar artigos úteis sobre peças de carroceria de ônibus. A geração automática segue o horário de Brasília. O posicionamento nas buscas depende da qualidade e da indexação do site.</p>
-<div class="panel" style="width:100%;max-width:none"><h2>Acesso individual</h2>
-<label for="access">Credencial autorizada</label><input id="access" type="password" autocomplete="off">
-<div class="row"><button id="connect">Conectar</button><button id="logout" class="ghost">Sair</button></div>
-<p id="ai-status" role="status" aria-live="polite">Conecte seu acesso para começar.</p>
+<div class="panel" style="width:100%;max-width:none">
+<p id="ai-status" role="status" aria-live="polite">Carregando seu acesso…</p>
+<section data-role="admin" hidden>
 <h2>Provedor e programação · administrador</h2>
 <label for="provider">Provedor</label><select id="provider"><option value="openai">OpenAI</option><option value="google">Google AI Studio / Gemini</option></select>
 <label for="model">Modelo com suporte a pesquisa</label><input id="model" placeholder="Identificador do modelo na API">
@@ -31,15 +33,15 @@
 <p><label><input id="autoPublish" type="checkbox"> Publicar automaticamente artigos sem afirmações técnicas</label></p>
 <p>Artigos com especificações ou compatibilidades ficam em rascunho para conferência. As chaves ficam criptografadas no servidor. O blog é publicado em <a href="/blog/">/blog/ deste domínio</a>.</p>
 <div class="row"><button id="save">Salvar configuração</button><button id="load" class="ghost">Carregar configuração</button></div>
-<h2>Artigos · editor</h2><div class="row"><button id="generate">Pesquisar e criar agora</button><button id="refresh" class="ghost">Atualizar lista</button></div><div id="articles"></div>
-<h2>Rastreabilidade · administrador</h2><button id="audit">Consultar registros</button><pre id="audit-output" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
+</section><section data-role="editor" hidden><h2>Artigos · editor</h2><div class="row"><button id="generate">Pesquisar e criar agora</button><button id="refresh" class="ghost">Atualizar lista</button></div><div id="articles"></div>
+</section><section data-role="admin" hidden><h2>Rastreabilidade · administrador</h2><button id="audit">Consultar registros</button><div id="audit-output" style="overflow:auto"></div></section>
 </div></main>
 
 <script>const BASE='../../';
 </script>
 <script src="../../assets/base.js"></script>
 <script>
-const accessScript=document.createElement('script');accessScript.src=BASE+'assets/access.js';accessScript.onload=()=>{const script=document.createElement('script');script.src=BASE+'assets/assistant.js';document.body.append(script);};document.body.append(accessScript);
+const assistantScript=document.createElement('script');assistantScript.src=BASE+'assets/assistant.js';document.body.append(assistantScript);
 </script>
 </body>
 </html>

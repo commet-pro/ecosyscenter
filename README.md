@@ -3,6 +3,37 @@
 Portal da Center Ônibus, por Commet. Cartão de visita, crachá, validação pública,
 editor de e-mail e assistente de conteúdo com pesquisa na web.
 
+## Login e equipe (v3.1)
+
+A entrada é `/login/`, com Netlify Identity oficial, recuperação de senha e
+aceitação de convite. O cadastro deve permanecer **Invite only**, com confirmação
+de e-mail obrigatória, no painel Identity do Netlify. Convites e recuperações
+são concluídos pela própria pessoa; nenhuma senha deve ser enviada pela equipe.
+
+`CENTER_MEMBERS_JSON`, no ambiente privado production, contém nome, e-mail,
+`roles` e `active` dos usuários autorizados. O servidor confere a lista em cada
+requisição: autenticação válida de um e-mail não cadastrado não dá acesso ao app.
+Papéis gravados no JWT pelo evento de signup entram em vigor no próximo login
+ou refresh do token; o app não confia em permissões de `user_metadata`.
+
+As páginas internas são servidas por uma função autenticada com `Cache-Control:
+private, no-store`, inclusive acesso direto ao HTML. `/v/` e `/blog/` permanecem
+públicos. A sessão oficial renova o token automaticamente. Acesso técnico Commet
+continua disponível com a credencial administrativa existente e cookie HttpOnly,
+Secure, SameSite=Strict, com validade de uma hora e revogação pelo registro do
+operador. Ela não deve ser compartilhada com a equipe.
+
+Impressões, inclusão/remoção na lista, exportações, emissões e ações de IA ficam
+na auditoria com pessoa, data/hora e IP observado pelo Netlify. A emissão também
+exige coordenadas e precisão do navegador. Eventos de impressão/exportação
+registram a solicitação, não comprovam a impressão física ou o download concluído.
+O app ainda não implementa cadastro permanente de funcionários nem revogação
+individual de crachás. A localização registra um ponto, não acompanha trajetos.
+
+Para build completo: `npm ci` e `npm run build`. Em Windows sem alias python3,
+rode `node build/assets.mjs` e `python build/build.py`. Identity deve ser validado
+em um deploy real; não funciona no servidor estático local.
+
 ## Produção no Netlify
 
 O autodeploy usa a branch `main`. O domínio do portal é

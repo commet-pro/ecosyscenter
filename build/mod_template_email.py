@@ -35,5 +35,8 @@ def build():
     # 3. Manter <img id="brand"> oculto para o JS que faz brand.src = ASSETS.logo
     html = html.replace(NEW_HEADER, NEW_HEADER + '<img id="brand" style="display:none" alt="">')
 
+    html = html.replace('</head>', '<script src="../../assets/access.js"></script><script src="../../assets/identity.bundle.js" defer></script></head>', 1)
+    # Exportações só são liberadas depois de registrar operador, horário e IP.
+    html = ('<script>const originalDownload=download;download=async function(name,data,type){try{await CenterAccess.ready;if(!CenterAccess.user)throw Error("Entre novamente para exportar.");await CenterAccess.track("email.export","template-email");originalDownload(name,data,type);}catch(e){alert(e.message);}};</script></body>').join(html.rsplit('</body>', 1))
     n = C.escrever("marketing/template-email/index.html", html)
     print(f"  marketing/template-email/index.html     {n//1024:>4} KB")

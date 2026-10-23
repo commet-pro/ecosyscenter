@@ -77,6 +77,6 @@ def build():
 </div>"""
     n = C.escrever("v/index.html", C.pagina(
         "Center Ônibus — Validação de crachá", "../", corpo,
-        scripts=["nacl-fast.min.js"], js=JS,
+        scripts=["nacl-fast.min.js"], js=JS, sessao=False,
         descricao="Validação pública de crachá Center Ônibus."))
     print(f"  v/index.html                    {n//1024:>4} KB  ·  destino do QR")

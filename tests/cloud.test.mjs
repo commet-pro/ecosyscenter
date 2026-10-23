@@ -39,3 +39,8 @@ test('Netlify: agendamento diário sem duplicação',async()=>{
  const f=fixture();await f.api('ai/config',{...settings,enabled:true});await Promise.all([f.app.scheduled(),f.app.scheduled()]);assert.equal(f.queued.length,1);
  await f.app.scheduled();assert.equal(f.queued.length,1);
 });
+test('Netlify: registra material e rejeita nomes de eventos arbitrários',async()=>{
+ const f=fixture();assert.equal((await f.api('events',{action:'material.print',module:'cracha',count:2},'issuer-credential')).status,200);
+ assert.equal((await f.api('events',{action:'fake.success',module:'cracha',count:2})).status,400);
+ const logs=await(await f.api('audit')).json(),print=logs.find(l=>l.action==='material.print');assert.equal(print.actor,'rh');assert.equal(print.ip,'203.0.113.20');assert.equal(JSON.parse(print.detail).count,2);
+});

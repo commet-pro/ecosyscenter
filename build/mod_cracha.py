@@ -25,9 +25,8 @@ CAMPOS = """
   <h2>Acesso de emissão</h2>
   <div class="chave" id="cracha-chave">
     <div class="estado"><i></i><span id="cracha-chave-txt">Acesso não conectado</span></div>
-    <p>Use sua credencial individual. A emissão registra data, hora, IP e localização do navegador no servidor. Permita a localização para emitir.</p>
-    <label for="cracha-acesso">Credencial individual</label><input id="cracha-acesso" type="password" autocomplete="off">
-    <div class="row"><button id="cracha-entrar">Conectar</button><button id="cracha-sair" class="ghost">Sair</button></div>
+    <p>Seu login individual identifica esta emissão. A emissão registra data, hora, IP e localização do navegador no servidor. Permita a localização para emitir.</p>
+
   </div>
 
   <h2 class="mt">Dados do funcionário</h2>
@@ -135,24 +134,10 @@ MODULO = {                      /* a variável já existe no base.js */
               .forEach(b=>b.disabled=(classe!=='ok')); };
     marcar('','Acesso não conectado');
 
-    const script=document.createElement('script');script.src=BASE+'assets/access.js';
-    document.getElementById('cracha-entrar').disabled=true;
-    script.onload=()=>document.getElementById('cracha-entrar').disabled=false;
-    document.body.append(script);
-    document.getElementById('cracha-entrar').onclick=async()=>{
-      CHAVE=null;MODULO.tokens.clear();document.getElementById('print').replaceChildren();
-      const input=document.getElementById('cracha-acesso');
-      try{
-        CenterAccess.credential=input.value.trim(); input.value='';
-        const me=await CenterAccess.request('me');
-        if(!me.roles.some(r=>['admin','issuer'].includes(r)))throw Error('Acesso sem permissão de emissão.');
-        CHAVE=true;marcar('ok','Conectado como '+me.id+' — emissão rastreada');
-      }catch(e){CHAVE=null;CenterAccess.credential='';marcar('erro',e.message);}
-    };
-    document.getElementById('cracha-sair').onclick=()=>{
-      CHAVE=null;if(window.CenterAccess)CenterAccess.credential='';MODULO.tokens.clear();
-      document.getElementById('print').replaceChildren();marcar('','Acesso encerrado');preview();
-    };
+    CenterAccess.ready.then(me=>{
+      if(me?.roles?.some(r=>['admin','issuer'].includes(r))){CHAVE=true;marcar('ok','Emissor: '+(me.name||me.email||me.id));}
+      else{CHAVE=null;marcar('erro','Seu acesso não permite emitir crachás.');}
+    });
 
     /* ---- foto ----------------------------------------------------- */
     document.getElementById('cracha-foto').addEventListener('change',e=>{

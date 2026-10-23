@@ -162,6 +162,7 @@ async function montarImpressao(itens){
 async function imprimir(itens){
   if (MODULO.podeImprimir && !MODULO.podeImprimir()) return;
   try {
+    if(window.CenterAccess?.user)await CenterAccess.track('material.print',MODULO.id,itens.length);
     if(MODULO.preparar) await MODULO.preparar(itens);
     await montarImpressao(itens);
     await document.fonts.ready;
@@ -200,8 +201,12 @@ async function preview(){
 
 function imprimirUm(){ imprimir([dados()]); }
 function imprimirLista(){ imprimir(lista.length?lista:[dados()]); }
-function adicionar(){ lista.push({...dados(),_foto:MODULO.foto}); refresh(); }
-function remover(i){ lista.splice(i,1); refresh(); }
+async function adicionar(){
+  try{if(window.CenterAccess?.user)await CenterAccess.track('material.list.add',MODULO.id);lista.push({...dados(),_foto:MODULO.foto});refresh();}catch(e){alert('Não foi possível registrar a ação: '+e.message);}
+}
+async function remover(i){
+  try{if(window.CenterAccess?.user)await CenterAccess.track('material.list.remove',MODULO.id);lista.splice(i,1);refresh();}catch(e){alert('Não foi possível registrar a ação: '+e.message);}
+}
 function refresh(){
   document.getElementById('lista').innerHTML = lista.map((v,i) =>
     `<div><span><b>${esc(v.nome)}</b> — ${esc(v.cargo)}</span>

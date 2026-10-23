@@ -1,0 +1,26 @@
+import core as C
+
+def build():
+    corpo='''<style>
+body{background:var(--navy);min-height:100vh}header{border-bottom:1px solid #ffffff24}
+.login-shell{max-width:980px;margin:8vh auto;display:grid;grid-template-columns:1fr 1fr;gap:64px;padding:28px}
+.login-intro{color:white;align-self:center}.login-intro h1{font-family:ArchivoCond;font-size:clamp(38px,5vw,62px);line-height:1.04;margin:14px 0 24px}
+.login-intro p{color:#c7d4e3;line-height:1.7}.login-tag{color:#9ebbd4;letter-spacing:.18em;font-size:11px;text-transform:uppercase}
+.login-card{background:#fff;padding:32px;border-top:4px solid var(--red);border-radius:4px}.login-card h2{font-size:22px;margin:0 0 12px}
+.login-card label{display:block;font-size:13px;margin:20px 0 8px}.login-card input{width:100%;padding:13px;font:inherit;border:1px solid #aebbc8;border-radius:3px}
+.login-card button{width:100%;margin-top:20px;padding:13px}.login-card button.ghost{background:white;color:var(--navy);border:1px solid #aebbc8}
+.login-card details{border-top:1px solid #dfe4e9;margin-top:22px;padding-top:18px;font-size:12px}.login-card p{font-size:13px;line-height:1.6}
+[hidden]{display:none!important}#login-status{min-height:42px;color:#354d65}input:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid #2E6DA4;outline-offset:3px}
+@media(max-width:700px){.login-shell{grid-template-columns:1fr;margin:18px auto;gap:22px;padding:20px}.login-intro h1{font-size:36px;margin:10px 0}.login-intro p{margin:0}.login-card{padding:24px}}
+</style><main class="login-shell">
+<section class="login-intro"><span class="login-tag">Portal de trabalho · Center Ônibus</span><h1>Seu acesso.<br>Uma operação conectada.</h1><p>Materiais da marca, identificação da equipe e conteúdo em um só lugar. Entre com sua conta individual para começar.</p></section>
+<section class="login-card" aria-labelledby="login-title"><h2 id="login-title">Entrar no portal</h2>
+<p id="login-status" role="status" aria-live="polite">Carregando acesso seguro…</p>
+<form id="login-form" method="post" onsubmit="return false"><label for="email">E-mail corporativo</label><input id="email" name="email" type="email" autocomplete="username" required>
+<label for="password">Senha</label><input id="password" name="password" type="password" autocomplete="current-password" required><button type="submit">Entrar</button><button id="forgot-password" class="ghost" type="button">Esqueci minha senha</button></form>
+<form id="new-password-form" method="post" onsubmit="return false" hidden><h3 id="password-title">Defina sua senha</h3><label for="new-password">Nova senha</label><input id="new-password" type="password" autocomplete="new-password" minlength="12" required>
+<label for="confirm-password">Confirme a senha</label><input id="confirm-password" type="password" autocomplete="new-password" minlength="12" required><button type="submit">Salvar senha e entrar</button></form>
+<p>Primeiro acesso? Abra o convite enviado ao seu e-mail para definir a senha. Cada acesso é individual.</p>
+<details><summary>Acesso técnico Commet</summary><form id="technical-form" method="post" onsubmit="return false"><label for="technical-credential">Credencial administrativa</label><input id="technical-credential" type="password" autocomplete="off" required><button type="submit">Entrar como administrador</button></form></details>
+</section></main>'''
+    C.escrever('login/index.html',C.pagina('Entrar — Center Ônibus','../',corpo,modulo_nome='Acesso seguro'))

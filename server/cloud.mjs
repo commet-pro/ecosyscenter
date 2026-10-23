@@ -2,7 +2,7 @@ import {randomUUID,randomBytes,createCipheriv,createDecipheriv,createHmac,timing
 import {authorize,badge,signingKey,token,location,hash} from './security.mjs';
 import {generate} from './ai.mjs';
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export function cloudApp({store,env,publicKey,request=fetch,generateArticle=generate,now=()=>new Date()}) {
+export function cloudApp({store,env,publicKey,request=fetch,generateArticle=generate,now=()=>new Date(),resolveUser=async()=>null}) {
   const origin=env.PUBLIC_ORIGIN||env.URL;
   const master=()=>{const k=Buffer.from(env.SETTINGS_KEY||'','base64');if(k.length!==32)throw Error('Configuração privada do servidor incompleta.');return k;};
   const read=key=>store.get(key,{type:'json'});
@@ -49,13 +49,20 @@ export function cloudApp({store,env,publicKey,request=fetch,generateArticle=gene
     let actor='anonymous';const ip=context.ip||'unknown';
     try {
       const path=new URL(req.url).pathname.replace(/^\/\.netlify\/functions\/center-api/,'');
-      const user=authorize(req.headers.get('Authorization'),JSON.parse(env.OPERATORS_JSON||'[]'));
+      const user=authorize(req.headers.get('Authorization'),JSON.parse(env.OPERATORS_JSON||'[]'))||await resolveUser(req,context);
       if(!user){await audit(actor,'access.denied',ip,{path});return response(401,{error:'Acesso individual inválido ou revogado.'});}actor=user.id;
       if(req.headers.get('Origin')&&req.headers.get('Origin')!==origin)return response(403,{error:'Origem não autorizada.'});
+      if(user.method&&!['GET','HEAD'].includes(req.method)&&req.headers.get('Origin')!==origin)return response(403,{error:'Origem não autorizada.'});
       const role=r=>{if(!user.roles?.some(v=>v===r||v==='admin'))throw Object.assign(Error('Você não tem autorização para este módulo.'),{status:403});};
       const body=async()=>{const raw=await req.text();if(Buffer.byteLength(raw)>32768)throw Error('Pedido muito grande.');return JSON.parse(raw||'{}');};
-      if(path==='/api/me'&&req.method==='GET'){await audit(actor,'access.connected',ip);return response(200,{id:user.id,roles:user.roles});}
+      if(path==='/api/me'&&req.method==='GET'){await audit(actor,'access.connected',ip);return response(200,{id:user.id,name:user.name,email:user.email,roles:user.roles});}
       if(path==='/api/audit'&&req.method==='GET'){role('admin');return response(200,await entries('audit/',200));}
+      if(path==='/api/events'&&req.method==='POST'){
+        const v=await body(),actions=['material.print','material.list.add','material.list.remove','email.export'];
+        if(!actions.includes(v.action)||!['cartao','cracha','template-email'].includes(v.module)||!Number.isInteger(v.count)||v.count<0||v.count>1000)throw Error('Evento inválido.');
+        if(v.module==='cracha')role('issuer');
+        await audit(actor,v.action,ip,{module:v.module,count:v.count});return response(200,{ok:true});
+      }
       if(path==='/api/badges/sign'&&req.method==='POST'){role('issuer');const v=await body(),geo=location(v.location),payload=badge(v,now()),key=signingKey(env.BADGE_SECRET_B64,publicKey);
         const signed=token(payload,key);await audit(actor,'badge.sign',ip,{location:geo,payloadHash:hash(payload),userAgent:(req.headers.get('User-Agent')||'').slice(0,300)});return response(200,{token:signed});}
       if(path==='/api/ai/config'){
