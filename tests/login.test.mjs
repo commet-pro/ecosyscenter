@@ -4,7 +4,10 @@ import {randomBytes} from 'node:crypto';
 import {identityAccess,technicalSession,technicalAccess,TECH_COOKIE} from '../server/login-policy.mjs';
 import {hash} from '../server/security.mjs';
 import identityEvents from '../netlify/functions/identity.mjs';
+import {config as apiRoutes} from '../netlify/functions/center-api.mjs';
+import {config as sessionRoutes} from '../netlify/functions/center-session.mjs';
 const env=()=>({SETTINGS_KEY:randomBytes(32).toString('base64'),OPERATORS_JSON:JSON.stringify([{id:'rafa',sha256:hash('test-admin-only'),roles:['admin']}]),CENTER_MEMBERS_JSON:JSON.stringify([{name:'Admin',email:'admin@example.com',roles:['member','admin']},{name:'Pessoa',email:'member@example.com',roles:['member','issuer','editor']},{name:'Revogado',email:'revoked@example.com',roles:['member'],active:false}])});
+test('rota de sessão não é capturada pelo curinga da API',()=>{assert.equal(apiRoutes.excludedPath,sessionRoutes.path);});
 test('Identity exige e-mail confirmado e lista autorizada; ignora papéis editáveis ou falsos',()=>{
  const e=env(),user={id:'verified-user',email:'MEMBER@example.com',confirmedAt:'2026-10-23T10:00:00Z',roles:['admin'],userMetadata:{roles:['admin']}};
  assert.equal(identityAccess(null,e),null);assert.equal(identityAccess({...user,confirmedAt:undefined},e),null);

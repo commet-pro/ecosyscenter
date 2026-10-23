@@ -7,6 +7,9 @@ test('scripts das oito páginas e ativos compilam',()=>{
  for(const path of pages){const html=readFileSync(new URL('../'+path,import.meta.url),'utf8');for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(m[1],{filename:path});}
  for(const path of ['assets/base.js','assets/access.js','assets/assistant.js','assets/identity.bundle.js'])new vm.Script(readFileSync(new URL('../'+path,import.meta.url),'utf8'),{filename:path});
 });
+test('validação pública continua independente do login',()=>{
+ const html=readFileSync(new URL('../v/index.html',import.meta.url),'utf8');assert.ok(!html.includes('identity.bundle.js'));assert.ok(!html.includes('assets/access.js'));
+});
 function validator(payload,hashOverride){
  const html=readFileSync(new URL('../v/index.html',import.meta.url),'utf8');
  const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];

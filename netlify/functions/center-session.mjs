@@ -15,4 +15,4 @@ export default async(req,context)=>{
     return new Response('{}',{headers:{...headers,'Set-Cookie':TECH_COOKIE+'='+value+'; Path=/; Max-Age=3600; HttpOnly; Secure; SameSite=Strict'}});
   }catch{return new Response(JSON.stringify({error:'Não foi possível iniciar a sessão técnica.'}),{status:400,headers});}
 };
-export const config={path:'/api/session',rateLimit:{action:'rate_limit',aggregateBy:'ip',windowLimit:10,windowSize:60}};
+export const config={path:'/api/session',rateLimit:{action:'rate_limit',aggregateBy:['ip'],windowLimit:10,windowSize:60}};
