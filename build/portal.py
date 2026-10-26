@@ -19,7 +19,7 @@ ICONES = {
     '<path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h7"/>',
   "Proposta comercial":
     '<path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/><path d="M8.5 12h7M8.5 15.5h4"/>',
-  "Catálogo de peças":
+  "Catálogo do Mercado Livre":
     '<path d="M3.5 5.5A2 2 0 0 1 5.5 4H11v16H5.5a2 2 0 0 0-2 1.5z"/>'
     '<path d="M20.5 5.5A2 2 0 0 0 18.5 4H13v16h5.5a2 2 0 0 1 2 1.5z"/>',
   "CRM":
@@ -85,6 +85,7 @@ def build():
     <p class="sub">Cada peça da operação vira um módulo aqui dentro. Crie materiais,
     emita crachás com acesso individual e acompanhe a produção de conteúdo.
     Emissões e ações administrativas ficam registradas no servidor.</p>
+    <p class="sub">Abra os cartões com “Abrir módulo”. Os itens “Em breve” ainda estão em desenvolvimento.</p>
   </div>
   <div class="num">
     <div><b>{len(C.CATEGORIAS)}</b>categorias</div>

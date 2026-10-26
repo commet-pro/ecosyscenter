@@ -71,13 +71,14 @@ CATEGORIAS = [
               "pronto para colar no Gmail e no Outlook."),
          dict(nome="Papelaria", desc="Timbrado, envelope e pasta na identidade nova."),
        ]),
-  dict(id="comercial", nome="Comercial", tag="Em construção",
+  dict(id="comercial", nome="Comercial", tag="Ativo",
        desc="Do primeiro contato ao pedido fechado.",
        modulos=[
          dict(nome="Proposta comercial", desc="Proposta com peças, prazos e "
               "condições, no padrão da marca."),
-         dict(nome="Catálogo de peças", desc="Catálogo filtrável por carroceria, "
-              "com código e aplicação."),
+         dict(nome="Catálogo do Mercado Livre", href="marketing/assistente/#mercado-livre",
+              desc="Conexão do Mercado Livre com o catálogo do site. "
+              "Configuração e situação da sincronização para administradores."),
          dict(nome="CRM", desc="Onde os módulos passam a compartilhar os mesmos "
               "dados de cliente e de pedido."),
        ]),
