@@ -17,7 +17,7 @@ def build():
 <p>Artigos com especificações ou compatibilidades ficam em rascunho para conferência. As chaves ficam criptografadas no servidor. Os artigos publicados aparecem automaticamente no <a href="https://centerbus.netlify.app/blog/" target="_blank" rel="noopener noreferrer">blog do site</a>.</p>
 <div class="row"><button id="save">Salvar configuração</button><button id="load" class="ghost">Carregar configuração</button></div>
 </section><section data-role="editor" hidden><h2>Artigos · editor</h2><div class="row"><button id="generate">Pesquisar e criar agora</button><button id="refresh" class="ghost">Atualizar lista</button></div><div id="articles"></div>
-</section><section data-role="admin" hidden>
+</section><section id="mercado-livre" data-role="admin" style="scroll-margin-top:90px" hidden>
 <h2>Catálogo do Mercado Livre</h2>
 <p>Conecte o aplicativo com a pessoa dona da conta vendedora. O site recebe fotos, preços e disponibilidade dos anúncios ativos a cada 15 minutos.</p>
 <p id="meli-status" role="status" aria-live="polite">Carregando conexão…</p>
