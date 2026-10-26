@@ -1,6 +1,8 @@
 import core as C
 
 def build():
+    with open(C.os.path.join(C.RAIZ, 'assets', 'assistant.js'), 'rb') as source:
+        assistant_version = C.hashlib.sha256(source.read()).hexdigest()[:12]
     corpo = '''<main class="portal" style="display:block">
 <h1>Assistente de conteúdo</h1><p>Pesquisa com fontes para criar artigos úteis sobre peças de carroceria de ônibus. A geração automática segue o horário de Brasília. O posicionamento nas buscas depende da qualidade e da indexação do site.</p>
 <div class="panel" style="width:100%;max-width:none">
@@ -29,5 +31,5 @@ def build():
 </section><section data-role="admin" hidden><h2>Rastreabilidade · administrador</h2><label for="audit-reference">Referência da emissão (opcional)</label><input id="audit-reference" maxlength="16" placeholder="Cole a referência exibida ao validar o QR"><button id="audit">Consultar registros</button><div id="audit-output" style="overflow:auto"></div></section>
 </div></main>'''
     C.escrever('marketing/assistente/index.html', C.pagina('Assistente de conteúdo — Center Ônibus', '../../', corpo, modulo_nome='Assistente de conteúdo', js='''
-const assistantScript=document.createElement('script');assistantScript.src=BASE+'assets/assistant.js';document.body.append(assistantScript);
-'''))
+const assistantScript=document.createElement('script');assistantScript.src=BASE+'assets/assistant.js?v=ASSISTANT_VERSION';document.body.append(assistantScript);
+'''.replace('ASSISTANT_VERSION', assistant_version)))
