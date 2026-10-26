@@ -59,4 +59,4 @@ el('meli-save').onclick=()=>run(async()=>{
 el('meli-connect').onclick=()=>run(async()=>{const result=await CenterAccess.request('mercadolivre/connect',{method:'POST'});window.location.assign(result.url);});
 el('meli-refresh').onclick=()=>run(loadMarketplace);
 CenterAccess.ready.then(async me=>{if(me?.roles.includes('admin'))try{await loadMarketplace();}catch(e){el('meli-status').textContent=e.message;}});
-CenterAccess.ready.then(me=>{if(me?.roles.includes('admin')&&location.hash==='#mercado-livre')requestAnimationFrame(()=>el('mercado-livre').scrollIntoView({block:'start'}));});
+CenterAccess.ready.then(me=>{if(me?.roles.includes('admin')&&location.hash==='#mercado-livre')el('mercado-livre').scrollIntoView({block:'start'});});
