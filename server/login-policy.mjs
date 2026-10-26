@@ -1,7 +1,20 @@
 import {createHmac,timingSafeEqual} from 'node:crypto';
 import {authorize} from './security.mjs';
 export const TECH_COOKIE='__Host-center-tech';
-export function members(env){return JSON.parse(env.CENTER_MEMBERS_JSON||'[]');}
+export function members(env){
+  const accounts=JSON.parse(env.CENTER_MEMBERS_JSON||'[]');
+  // Keep the existing private team list intact. Administrators are explicitly
+  // configured on the server and still need a confirmed Identity account.
+  for(const value of (env.CENTER_ADMIN_EMAILS||'').split(',')){
+    const email=value.trim().toLowerCase();
+    if(!email)continue;
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw Error('E-mail de administrador inválido na configuração.');
+    const index=accounts.findIndex(account=>account.email.toLowerCase()===email);
+    if(index<0)accounts.push({email,name:email,roles:['admin'],active:true});
+    else accounts[index]={...accounts[index],roles:[...new Set([...accounts[index].roles,'admin'])],active:true};
+  }
+  return accounts;
+}
 export function identityAccess(user,env){
   if(!user?.id||!user.email||!user.confirmedAt)return null;
   const account=members(env).find(m=>m.email.toLowerCase()===user.email.toLowerCase()&&m.active!==false);

@@ -13,6 +13,13 @@ são concluídos pela própria pessoa; nenhuma senha deve ser enviada pela equip
 `CENTER_MEMBERS_JSON`, no ambiente privado production, contém nome, e-mail,
 `roles` e `active` dos usuários autorizados. O servidor confere a lista em cada
 requisição: autenticação válida de um e-mail não cadastrado não dá acesso ao app.
+Administradores também podem ser definidos em `CENTER_ADMIN_EMAILS` (e-mails
+separados por vírgula, somente no contexto production). Essa configuração inclui
+ou reativa os e-mails explicitamente informados com papel `admin`, preservando a
+lista privada da equipe. Não cria login e não dispensa confirmação do e-mail:
+a pessoa precisa aceitar um convite do Identity e definir a própria senha.
+Para revogar esse acesso adicional, remova o e-mail dessa variável; confira
+também se a lista `CENTER_MEMBERS_JSON` concede acesso ou papel administrativo.
 Papéis gravados no JWT pelo evento de signup entram em vigor no próximo login
 ou refresh do token; o app não confia em permissões de `user_metadata`.
 
