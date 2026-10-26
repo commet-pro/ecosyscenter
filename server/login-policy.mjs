@@ -6,7 +6,7 @@ export function identityAccess(user,env){
   if(!user?.id||!user.email||!user.confirmedAt)return null;
   const account=members(env).find(m=>m.email.toLowerCase()===user.email.toLowerCase()&&m.active!==false);
   if(!account)return null;
-  return {id:user.email.toLowerCase(),identityId:user.id,name:account.name,email:user.email.toLowerCase(),roles:account.roles.filter(r=>['member','issuer','editor','admin'].includes(r)),method:'identity'};
+  return {id:user.email.toLowerCase(),identityId:user.id,name:account.name,email:user.email.toLowerCase(),roles:account.roles.filter(r=>['member','issuer','editor','admin'].includes(r)),method:'identity',mustChangePassword:user.appMetadata?.must_change_password===true};
 }
 const mac=(value,env)=>createHmac('sha256',Buffer.from(env.SETTINGS_KEY||'','base64')).update(value).digest('base64url');
 export function technicalSession(credential,env,time=Date.now()){

@@ -4,7 +4,7 @@ const modules=['cartao','cracha','validador','template-email','assistente'];
 export default async req=>{
   const path=new URL(req.url).pathname;
   const user=await portalUser(req);
-  if(!user)return new Response(null,{status:302,headers:{Location:'/login/?next='+encodeURIComponent(path),'Cache-Control':'no-store'}});
+  if(!user||user.mustChangePassword)return new Response(null,{status:302,headers:{Location:'/login/?next='+encodeURIComponent(path),'Cache-Control':'no-store'}});
   let file;
   if(path==='/'||path==='/index.html')file='dist/index.html';
   else{

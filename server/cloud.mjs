@@ -55,7 +55,8 @@ export function cloudApp({store,env,publicKey,request=fetch,generateArticle=gene
       if(user.method&&!['GET','HEAD'].includes(req.method)&&req.headers.get('Origin')!==origin)return response(403,{error:'Origem não autorizada.'});
       const role=r=>{if(!user.roles?.some(v=>v===r||v==='admin'))throw Object.assign(Error('Você não tem autorização para este módulo.'),{status:403});};
       const body=async()=>{const raw=await req.text();if(Buffer.byteLength(raw)>32768)throw Error('Pedido muito grande.');return JSON.parse(raw||'{}');};
-      if(path==='/api/me'&&req.method==='GET'){await audit(actor,'access.connected',ip);return response(200,{id:user.id,name:user.name,email:user.email,roles:user.roles});}
+      if(path==='/api/me'&&req.method==='GET'){await audit(actor,'access.connected',ip);return response(200,{id:user.id,name:user.name,email:user.email,roles:user.roles,mustChangePassword:!!user.mustChangePassword});}
+      if(user.mustChangePassword)return response(403,{error:'Troque sua senha temporária antes de usar o portal.'});
       if(path==='/api/audit'&&req.method==='GET'){role('admin');const ref=new URL(req.url).searchParams.get('issuanceId');if(ref){if(!/^[A-Za-z0-9_-]{16}$/.test(ref))throw Error('Referência de emissão inválida.');const row=await read('issuances/'+ref);return response(200,row?[row]:[]);}return response(200,await entries('audit/',200));}
       if(path==='/api/events'&&req.method==='POST'){
         const v=await body(),actions=['material.print','material.list.add','material.list.remove','email.export'];
