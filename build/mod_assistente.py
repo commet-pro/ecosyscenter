@@ -14,9 +14,18 @@ def build():
 <label for="hour">Gerar diariamente a partir de (0–23h, Brasília)</label><input id="hour" type="number" min="0" max="23" value="9">
 <p><label><input id="enabled" type="checkbox"> Ativar geração diária</label></p>
 <p><label><input id="autoPublish" type="checkbox"> Publicar automaticamente artigos sem afirmações técnicas</label></p>
-<p>Artigos com especificações ou compatibilidades ficam em rascunho para conferência. As chaves ficam criptografadas no servidor. O blog é publicado em <a href="/blog/">/blog/ deste domínio</a>.</p>
+<p>Artigos com especificações ou compatibilidades ficam em rascunho para conferência. As chaves ficam criptografadas no servidor. Os artigos publicados aparecem automaticamente no <a href="https://centerbus.netlify.app/blog/" target="_blank" rel="noopener noreferrer">blog do site</a>.</p>
 <div class="row"><button id="save">Salvar configuração</button><button id="load" class="ghost">Carregar configuração</button></div>
 </section><section data-role="editor" hidden><h2>Artigos · editor</h2><div class="row"><button id="generate">Pesquisar e criar agora</button><button id="refresh" class="ghost">Atualizar lista</button></div><div id="articles"></div>
+</section><section data-role="admin" hidden>
+<h2>Catálogo do Mercado Livre</h2>
+<p>Conecte o aplicativo com a pessoa dona da conta vendedora. O site recebe fotos, preços e disponibilidade dos anúncios ativos a cada 15 minutos.</p>
+<p id="meli-status" role="status" aria-live="polite">Carregando conexão…</p>
+<p>URL de retorno para cadastrar no aplicativo: <code id="meli-callback"></code></p>
+<label for="meli-client">App ID</label><input id="meli-client" inputmode="numeric" autocomplete="off">
+<label for="meli-secret">Client Secret</label><input id="meli-secret" type="password" autocomplete="off">
+<label for="meli-seller">ID do vendedor Center Ônibus</label><input id="meli-seller" inputmode="numeric" autocomplete="off">
+<div class="row"><button id="meli-save">Salvar aplicativo</button><button id="meli-connect">Autorizar conta vendedora</button><button id="meli-refresh" class="ghost">Atualizar situação</button></div>
 </section><section data-role="admin" hidden><h2>Rastreabilidade · administrador</h2><label for="audit-reference">Referência da emissão (opcional)</label><input id="audit-reference" maxlength="16" placeholder="Cole a referência exibida ao validar o QR"><button id="audit">Consultar registros</button><div id="audit-output" style="overflow:auto"></div></section>
 </div></main>'''
     C.escrever('marketing/assistente/index.html', C.pagina('Assistente de conteúdo — Center Ônibus', '../../', corpo, modulo_nome='Assistente de conteúdo', js='''

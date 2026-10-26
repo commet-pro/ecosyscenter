@@ -4,7 +4,7 @@ import {generateKeyPairSync,randomBytes,verify} from 'node:crypto';
 import {cloudApp} from '../server/cloud.mjs';
 import {hash} from '../server/security.mjs';
 function fixture(){
- const data=new Map(),store={async get(key){return data.get(key)?structuredClone(data.get(key)):null;},async setJSON(key,value,opts={}){if(opts.onlyIfNew&&data.has(key))return {modified:false};data.set(key,structuredClone(value));return {modified:true};},async list({prefix}){return {blobs:[...data.keys()].filter(k=>k.startsWith(prefix)).map(key=>({key}))};}};
+ const data=new Map(),store={async get(key){return data.get(key)?structuredClone(data.get(key)):null;},async setJSON(key,value,opts={}){if(opts.onlyIfNew&&data.has(key))return {modified:false};data.set(key,structuredClone(value));return {modified:true};},async *list({prefix}){yield {blobs:[...data.keys()].filter(k=>k.startsWith(prefix)).map(key=>({key}))};}};
  const {privateKey,publicKey}=generateKeyPairSync('ed25519'),pub=publicKey.export({type:'spki',format:'der'}).subarray(-32),seed=privateKey.export({type:'pkcs8',format:'der'}).subarray(-32);
  const env={PUBLIC_ORIGIN:'https://center.example',CENTER_ENV:'production',SETTINGS_KEY:randomBytes(32).toString('base64'),BADGE_SECRET_B64:Buffer.concat([seed,pub]).toString('base64url'),OPERATORS_JSON:JSON.stringify([{id:'rafa',sha256:hash('admin-credential'),roles:['admin']},{id:'rh',sha256:hash('issuer-credential'),roles:['issuer']}])};
  let calls=0;const queued=[];const app=cloudApp({store,env,publicKey:pub.toString('base64url'),now:()=>new Date('2026-10-14T15:00:00Z'),request:async(url,options)=>{queued.push(new Request(url,options));return {status:202};},generateArticle:async()=>{calls++;return {title:'<script>Guia Center</script>',description:'Guia seguro',paragraphs:['<img src=x onerror=alert(1)>'],sources:[{title:'Manual',url:'https://example.com/manual'}],technicalClaims:true};}});
@@ -12,6 +12,16 @@ function fixture(){
  return {data,store,app,api,env,queued,publicKey,calls:()=>calls};
 }
 const settings={provider:'openai',model:'test',key:'fake-api-key-for-tests',topic:'Guias de carroceria',hour:9,enabled:false,autoPublish:true};
+test('feed público: publica somente artigos aprovados sem expor credenciais ou auditoria',async()=>{
+ const f=fixture();await f.api('ai/config',settings);
+ const job=await(await f.api('ai/generate',{})).json();await f.app.worker(f.queued[0].clone());
+ const req=()=>new Request('https://center.example/public/posts');
+ assert.deepEqual((await(await f.app.publicPosts(req())).json()).posts,[]);
+ await f.api('posts/publish',{id:job.jobId});
+ const result=await(await f.app.publicPosts(req())).json();assert.equal(result.posts.length,1);assert.equal(result.posts[0].id,job.jobId);
+ assert.deepEqual(Object.keys(result.posts[0]).sort(),['article','at','id']);assert.ok(!JSON.stringify(result).includes(settings.key));
+ assert.equal((await f.api('mercadolivre/status',undefined,'issuer-credential')).status,403);
+});
 test('Netlify: autorização, localização, IP da plataforma e persistência de auditoria',async()=>{
  const f=fixture();assert.equal((await f.api('me',undefined,'wrong')).status,401);
  assert.equal((await f.api('audit',undefined,'issuer-credential')).status,403);

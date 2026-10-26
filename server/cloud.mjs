@@ -1,15 +1,17 @@
 import {randomUUID,randomBytes,createCipheriv,createDecipheriv,createHmac,timingSafeEqual} from 'node:crypto';
 import {authorize,badge,signingKey,token,location,hash} from './security.mjs';
 import {generate} from './ai.mjs';
+import {marketplace} from './marketplace.mjs';
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function cloudApp({store,env,publicKey,request=fetch,generateArticle=generate,now=()=>new Date(),resolveUser=async()=>null}) {
   const origin=env.PUBLIC_ORIGIN||env.URL;
+  const market=marketplace({store,env,request,now});
   const master=()=>{const k=Buffer.from(env.SETTINGS_KEY||'','base64');if(k.length!==32)throw Error('Configuração privada do servidor incompleta.');return k;};
   const read=key=>store.get(key,{type:'json'});
   const write=(key,v,opts)=>store.setJSON(key,v,opts);
   const response=(status,data,type='application/json')=>new Response(type==='application/json'?JSON.stringify(data):data,{status,headers:{'Content-Type':type+'; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'}});
   async function audit(actor,action,ip,detail={}){const at=now().toISOString(),row={at,actor,action,ip,detail:JSON.stringify(detail)};await write(`audit/${at}/${randomUUID()}`,row);return row;}
-  async function entries(prefix,limit=100){const {blobs}=await store.list({prefix});return (await Promise.all(blobs.map(b=>b.key).sort().reverse().slice(0,limit).map(read))).filter(Boolean);}
+  async function entries(prefix,limit=100){const blobs=[];for await(const page of store.list({prefix,paginate:true}))blobs.push(...page.blobs);return (await Promise.all(blobs.map(b=>b.key).sort().reverse().slice(0,limit).map(read))).filter(Boolean);}
   function seal(value){const iv=randomBytes(12),c=createCipheriv('aes-256-gcm',master(),iv);return {iv:iv.toString('base64'),data:Buffer.concat([c.update(JSON.stringify(value)),c.final()]).toString('base64'),tag:c.getAuthTag().toString('base64')};}
   async function settings(){const v=await read('settings');if(!v)return null;const d=createDecipheriv('aes-256-gcm',master(),Buffer.from(v.iv,'base64'));d.setAuthTag(Buffer.from(v.tag,'base64'));return JSON.parse(Buffer.concat([d.update(Buffer.from(v.data,'base64')),d.final()]).toString());}
   const signature=id=>createHmac('sha256',master()).update(id).digest('hex');
@@ -35,7 +37,7 @@ export function cloudApp({store,env,publicKey,request=fetch,generateArticle=gene
         const titleKey=hash(article.title.trim().toLocaleLowerCase('pt-BR'));
         if(!(await write('titles/'+titleKey,{id},{onlyIfNew:true})).modified)throw Error('Título já produzido. Ajuste a direção editorial.');
         const status=c.autoPublish&&!article.technicalClaims?'published':'draft';
-        await write('posts/'+job.at+'/'+id,{id,at:job.at,status,article});
+        await write('posts/'+job.at+'/'+id,{id,at:job.at,status,article,...(status==='published'?{publishedAt:now().toISOString()}:{})});
         await audit(job.actor,'ai.generate',job.ip,{id,status});await write('jobs/'+id,{...job,status:'done',postId:id});
       }catch(e){await write('jobs/'+id,{...job,status:'failed',error:e.message});await audit(job.actor,'ai.failed',job.ip,{id,error:e.message});}
     }catch{console.error('Falha ao processar trabalho de conteúdo.');}
@@ -57,6 +59,7 @@ export function cloudApp({store,env,publicKey,request=fetch,generateArticle=gene
       const body=async()=>{const raw=await req.text();if(Buffer.byteLength(raw)>32768)throw Error('Pedido muito grande.');return JSON.parse(raw||'{}');};
       if(path==='/api/me'&&req.method==='GET'){await audit(actor,'access.connected',ip);return response(200,{id:user.id,name:user.name,email:user.email,roles:user.roles,mustChangePassword:!!user.mustChangePassword});}
       if(user.mustChangePassword)return response(403,{error:'Troque sua senha temporária antes de usar o portal.'});
+      if(path.startsWith('/api/mercadolivre/')){role('admin');return await market.admin(req,path);}
       if(path==='/api/audit'&&req.method==='GET'){role('admin');const ref=new URL(req.url).searchParams.get('issuanceId');if(ref){if(!/^[A-Za-z0-9_-]{16}$/.test(ref))throw Error('Referência de emissão inválida.');const row=await read('issuances/'+ref);return response(200,row?[row]:[]);}return response(200,await entries('audit/',200));}
       if(path==='/api/events'&&req.method==='POST'){
         const v=await body(),actions=['material.print','material.list.add','material.list.remove','email.export'];
@@ -81,7 +84,7 @@ export function cloudApp({store,env,publicKey,request=fetch,generateArticle=gene
         if(['queued','running'].includes(job.status)&&now()-new Date(job.at)>15*60000)return response(200,{status:'failed',error:'Pesquisa excedeu o prazo. Consulte os artigos antes de tentar novamente.'});
         return response(200,{status:job.status,error:job.error,postId:job.postId});}
       if(path==='/api/posts'&&req.method==='GET'){role('editor');return response(200,await entries('posts/',100));}
-      if(path==='/api/posts/publish'&&req.method==='POST'){role('editor');const v=await body(),list=await entries('posts/',100),post=list.find(p=>p.id===v.id);if(!post)throw Error('Artigo não encontrado.');await write('posts/'+post.at+'/'+post.id,{...post,status:'published'});await audit(actor,'post.publish',ip,{id:post.id});return response(200,{ok:true});}
+      if(path==='/api/posts/publish'&&req.method==='POST'){role('editor');const v=await body(),list=await entries('posts/',100),post=list.find(p=>p.id===v.id);if(!post)throw Error('Artigo não encontrado.');await write('posts/'+post.at+'/'+post.id,{...post,status:'published',publishedAt:post.publishedAt||now().toISOString()});await audit(actor,'post.publish',ip,{id:post.id});return response(200,{ok:true});}
       return response(404,{error:'Rota não encontrada.'});
     }catch(e){try{await audit(actor,'request.failed',ip,{error:e.message});}catch{}return response(e.status||400,{error:e.message});}
   }
@@ -94,5 +97,10 @@ export function cloudApp({store,env,publicKey,request=fetch,generateArticle=gene
     const a=p.article,json=JSON.stringify({'@context':'https://schema.org','@type':'Article',headline:a.title,description:a.description,datePublished:p.at,author:{'@type':'Organization',name:'Center Ônibus'},mainEntityOfPage:origin+'/blog/'+id+'/'}).replace(/</g,'\\u003c');
     return response(200,page(a.title,a.description,`<h1>${escape(a.title)}</h1><time>${escape(new Date(p.at).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}))}</time>${a.paragraphs.map(t=>`<p>${escape(t)}</p>`).join('')}<h2>Fontes da pesquisa</h2><ul>${a.sources.map(s=>`<li><a rel="noopener noreferrer" href="${escape(s.url)}">${escape(s.title||s.url)}</a></li>`).join('')}</ul><script type="application/ld+json">${json}</script>`,'/blog/'+id+'/'),'text/html');
   }
-  return {api,worker,scheduled,blog};
+  async function publicPosts(req){
+    if(req.method!=='GET')return response(405,{error:'Método não permitido.'});
+    const posts=(await entries('posts/',Number.MAX_SAFE_INTEGER)).filter(p=>p.status==='published').map(p=>({id:p.id,at:p.publishedAt||p.at,article:p.article}));
+    return response(200,{version:1,posts});
+  }
+  return {api,worker,scheduled,blog,publicPosts,market};
 }
