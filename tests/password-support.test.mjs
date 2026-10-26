@@ -3,6 +3,12 @@ import assert from 'node:assert/strict';
 import {replacePassword} from '../server/password-support.mjs';
 import {identityAccess} from '../server/login-policy.mjs';
 import {cloudApp} from '../server/cloud.mjs';
+import {verifiedIdentityUser} from '../server/netlify-runtime.mjs';
+test('sessão verificada com claims incompletos consulta cadastro confirmado no Identity',async()=>{
+ const full={id:'verified-id',confirmedAt:'today',email:'member@example.com'};
+ assert.equal(await verifiedIdentityUser({async getUser(){return {id:full.id};},admin:{async getUser(id){assert.equal(id,full.id);return full;}}}),full);
+ assert.equal(await verifiedIdentityUser({async getUser(){return null;},admin:{getUser(){assert.fail('não consulta cadastro sem sessão verificada');}}}),null);
+});
 test('senha temporária mantém papéis e exige troca com marcação exclusiva do servidor',async()=>{
  const user={id:'id',email:'member@example.com',confirmedAt:'today',appMetadata:{roles:['issuer'],other:'keep'}};
  let update;
