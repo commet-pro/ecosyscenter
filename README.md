@@ -5,6 +5,10 @@ editor de e-mail e assistente de conteúdo com pesquisa na web.
 
 ## Login e equipe (v3.1)
 
+Blog e agendamento ficam em `/marketing/assistente/`. A conexão do catálogo do
+Mercado Livre tem tela independente em `/marketing/mercado-livre/`, acessível
+pelo cartão da categoria Comercial. Os controles e scripts são separados.
+
 A entrada é `/login/`, com Netlify Identity oficial, recuperação de senha e
 aceitação de convite. O cadastro deve permanecer **Invite only**, com confirmação
 de e-mail obrigatória, no painel Identity do Netlify. Convites e recuperações

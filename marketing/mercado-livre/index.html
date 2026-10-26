@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Catálogo do Mercado Livre — Center Ônibus</title>
+<link rel="stylesheet" href="../../assets/base.css">
+<link rel="icon" href="../../assets/marca/simbolo-cor.png">
+</head>
+<body>
+<script src="../../assets/access.js"></script><script src="../../assets/identity.bundle.js?v=03fe2a3eb0d1" defer></script>
+<header>
+  <a href="../../"><img class="logo" src="../../assets/marca/assinatura-reduzida-neg.png"
+     alt="Center Ônibus"></a>
+  <span class="sep"></span><span class="mod">Catálogo do Mercado Livre</span>
+  <a class="voltar" href="../../">← todos os módulos</a>
+  <span id="session-name" style="font-size:11px;margin-left:auto"></span>
+  <button id="session-logout" type="button" style="width:auto;padding:6px 10px" >Sair</button>
+</header>
+<main class="portal" style="display:block">
+<h1>Catálogo do Mercado Livre</h1>
+<p>Conecte a conta vendedora para atualizar os produtos exibidos no site da Center Ônibus.</p>
+<div class="panel" style="width:100%;max-width:none">
+<p id="market-access" role="status" aria-live="polite">Carregando seu acesso…</p>
+<section id="mercado-livre" data-role="admin" style="scroll-margin-top:90px" hidden>
+<h2>Conexão e sincronização</h2>
+<p>Conecte o aplicativo com a pessoa dona da conta vendedora. O site recebe fotos, preços e disponibilidade dos anúncios ativos a cada 15 minutos.</p>
+<p id="meli-status" role="status" aria-live="polite">Carregando conexão…</p>
+<p>URL de retorno para cadastrar no aplicativo: <code id="meli-callback"></code></p>
+<label for="meli-client">App ID</label><input id="meli-client" inputmode="numeric" autocomplete="off">
+<label for="meli-secret">Client Secret</label><input id="meli-secret" type="password" autocomplete="off">
+<label for="meli-seller">ID do vendedor Center Ônibus</label><input id="meli-seller" inputmode="numeric" autocomplete="off">
+<div class="row"><button id="meli-save">Salvar aplicativo</button><button id="meli-connect">Autorizar conta vendedora</button><button id="meli-refresh" class="ghost">Atualizar situação</button></div>
+</section>
+</div></main>
+
+<script>const BASE='../../';
+</script>
+<script src="../../assets/base.js"></script>
+<script>
+const marketScript=document.createElement('script');marketScript.src=BASE+'assets/marketplace.js?v=6cd9a9a0fa2f';document.body.append(marketScript);
+</script>
+</body>
+</html>

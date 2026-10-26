@@ -16,10 +16,10 @@ import os, sys, shutil
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import core as C
-import mod_assistente, mod_login
+import mod_assistente, mod_mercado_livre, mod_login
 import portal, mod_cartao, mod_cracha, mod_validador, validador_publico, mod_template_email
 
-MODULOS = [mod_login, mod_assistente, portal, mod_cartao, mod_cracha, mod_validador, validador_publico, mod_template_email]
+MODULOS = [mod_login, mod_assistente, mod_mercado_livre, portal, mod_cartao, mod_cracha, mod_validador, validador_publico, mod_template_email]
 
 
 def main():
