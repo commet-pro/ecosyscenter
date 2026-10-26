@@ -1,6 +1,6 @@
 import {readFileSync} from 'node:fs';
 import {portalUser} from '../../server/netlify-runtime.mjs';
-const modules=['cartao','cracha','validador','template-email','assistente'];
+const modules=['cartao','cracha','validador','template-email','assistente','mercado-livre'];
 export default async req=>{
   const path=new URL(req.url).pathname;
   const user=await portalUser(req);

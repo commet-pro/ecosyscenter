@@ -66,7 +66,7 @@ CATEGORIAS = [
          dict(nome="Template de e-mail", href="marketing/template-email/",
               desc="Gerador de template promocional em HTML para campanhas "
                    "comerciais, com exportação para plataformas de envio."),
-         dict(nome="Assistente de conteúdo", href="marketing/assistente/", desc="Pesquisa com fontes, artigos e programação editorial com IA."),
+         dict(nome="Blog e agendamento", href="marketing/assistente/", desc="Pesquisa com fontes, artigos e programação editorial com IA."),
          dict(nome="Assinatura de e-mail", desc="Bloco de assinatura padronizado, "
               "pronto para colar no Gmail e no Outlook."),
          dict(nome="Papelaria", desc="Timbrado, envelope e pasta na identidade nova."),
@@ -76,7 +76,7 @@ CATEGORIAS = [
        modulos=[
          dict(nome="Proposta comercial", desc="Proposta com peças, prazos e "
               "condições, no padrão da marca."),
-         dict(nome="Catálogo do Mercado Livre", href="marketing/assistente/#mercado-livre",
+         dict(nome="Catálogo do Mercado Livre", href="marketing/mercado-livre/",
               desc="Conexão do Mercado Livre com o catálogo do site. "
               "Configuração e situação da sincronização para administradores."),
          dict(nome="CRM", desc="Onde os módulos passam a compartilhar os mesmos "

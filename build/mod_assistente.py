@@ -4,7 +4,7 @@ def build():
     with open(C.os.path.join(C.RAIZ, 'assets', 'assistant.js'), 'rb') as source:
         assistant_version = C.hashlib.sha256(source.read()).hexdigest()[:12]
     corpo = '''<main class="portal" style="display:block">
-<h1>Assistente de conteúdo</h1><p>Pesquisa com fontes para criar artigos úteis sobre peças de carroceria de ônibus. A geração automática segue o horário de Brasília. O posicionamento nas buscas depende da qualidade e da indexação do site.</p>
+<h1>Blog e agendamento</h1><p>Pesquisa com fontes para criar artigos úteis sobre peças de carroceria de ônibus. A geração automática segue o horário de Brasília. O posicionamento nas buscas depende da qualidade e da indexação do site.</p>
 <div class="panel" style="width:100%;max-width:none">
 <p id="ai-status" role="status" aria-live="polite">Carregando seu acesso…</p>
 <section data-role="admin" hidden>
@@ -19,17 +19,8 @@ def build():
 <p>Artigos com especificações ou compatibilidades ficam em rascunho para conferência. As chaves ficam criptografadas no servidor. Os artigos publicados aparecem automaticamente no <a href="https://centerbus.netlify.app/blog/" target="_blank" rel="noopener noreferrer">blog do site</a>.</p>
 <div class="row"><button id="save">Salvar configuração</button><button id="load" class="ghost">Carregar configuração</button></div>
 </section><section data-role="editor" hidden><h2>Artigos · editor</h2><div class="row"><button id="generate">Pesquisar e criar agora</button><button id="refresh" class="ghost">Atualizar lista</button></div><div id="articles"></div>
-</section><section id="mercado-livre" data-role="admin" style="scroll-margin-top:90px" hidden>
-<h2>Catálogo do Mercado Livre</h2>
-<p>Conecte o aplicativo com a pessoa dona da conta vendedora. O site recebe fotos, preços e disponibilidade dos anúncios ativos a cada 15 minutos.</p>
-<p id="meli-status" role="status" aria-live="polite">Carregando conexão…</p>
-<p>URL de retorno para cadastrar no aplicativo: <code id="meli-callback"></code></p>
-<label for="meli-client">App ID</label><input id="meli-client" inputmode="numeric" autocomplete="off">
-<label for="meli-secret">Client Secret</label><input id="meli-secret" type="password" autocomplete="off">
-<label for="meli-seller">ID do vendedor Center Ônibus</label><input id="meli-seller" inputmode="numeric" autocomplete="off">
-<div class="row"><button id="meli-save">Salvar aplicativo</button><button id="meli-connect">Autorizar conta vendedora</button><button id="meli-refresh" class="ghost">Atualizar situação</button></div>
 </section><section data-role="admin" hidden><h2>Rastreabilidade · administrador</h2><label for="audit-reference">Referência da emissão (opcional)</label><input id="audit-reference" maxlength="16" placeholder="Cole a referência exibida ao validar o QR"><button id="audit">Consultar registros</button><div id="audit-output" style="overflow:auto"></div></section>
 </div></main>'''
-    C.escrever('marketing/assistente/index.html', C.pagina('Assistente de conteúdo — Center Ônibus', '../../', corpo, modulo_nome='Assistente de conteúdo', js='''
-const assistantScript=document.createElement('script');assistantScript.src=BASE+'assets/assistant.js?v=ASSISTANT_VERSION';document.body.append(assistantScript);
+    C.escrever('marketing/assistente/index.html', C.pagina('Blog e agendamento — Center Ônibus', '../../', corpo, modulo_nome='Blog e agendamento', js='''
+if(location.hash==='#mercado-livre'){location.replace('/marketing/mercado-livre/');}else{const assistantScript=document.createElement('script');assistantScript.src=BASE+'assets/assistant.js?v=ASSISTANT_VERSION';document.body.append(assistantScript);}
 '''.replace('ASSISTANT_VERSION', assistant_version)))

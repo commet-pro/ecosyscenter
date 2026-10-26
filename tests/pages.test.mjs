@@ -2,16 +2,23 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-const pages=['login/index.html','index.html','marketing/cartao/index.html','marketing/cracha/index.html','marketing/validador/index.html','marketing/template-email/index.html','marketing/assistente/index.html','v/index.html'];
-test('scripts das oito páginas e ativos compilam',()=>{
+const pages=['login/index.html','index.html','marketing/cartao/index.html','marketing/cracha/index.html','marketing/validador/index.html','marketing/template-email/index.html','marketing/assistente/index.html','marketing/mercado-livre/index.html','v/index.html'];
+test('scripts das páginas e ativos compilam',()=>{
  for(const path of pages){const html=readFileSync(new URL('../'+path,import.meta.url),'utf8');for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(m[1],{filename:path});}
- for(const path of ['assets/base.js','assets/access.js','assets/assistant.js','assets/identity.bundle.js'])new vm.Script(readFileSync(new URL('../'+path,import.meta.url),'utf8'),{filename:path});
+ for(const path of ['assets/base.js','assets/access.js','assets/assistant.js','assets/marketplace.js','assets/identity.bundle.js'])new vm.Script(readFileSync(new URL('../'+path,import.meta.url),'utf8'),{filename:path});
 });
 test('validação pública continua independente do login',()=>{
  const html=readFileSync(new URL('../v/index.html',import.meta.url),'utf8');assert.ok(!html.includes('identity.bundle.js'));assert.ok(!html.includes('assets/access.js'));
 });
 test('auditoria oferece o campo de consulta por referência',()=>{
  const html=readFileSync(new URL('../marketing/assistente/index.html',import.meta.url),'utf8');assert.match(html,/id="audit-reference"/);
+});
+test('blog e catálogo têm páginas e controles independentes',()=>{
+ const blog=readFileSync(new URL('../marketing/assistente/index.html',import.meta.url),'utf8');
+ const market=readFileSync(new URL('../marketing/mercado-livre/index.html',import.meta.url),'utf8');
+ assert.match(blog,/id="provider"/);assert.ok(!blog.includes('id="meli-client"'));
+ assert.match(market,/id="meli-client"/);assert.ok(!market.includes('id="provider"'));assert.ok(!market.includes('id="articles"'));
+ assert.match(market,/assets\/marketplace\.js\?v=/);assert.match(blog,/assets\/assistant\.js\?v=/);
 });
 function validator(payload,hashOverride){
  const html=readFileSync(new URL('../v/index.html',import.meta.url),'utf8');

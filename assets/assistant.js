@@ -45,18 +45,3 @@ el('audit').onclick=()=>run(async()=>{
   }out.append(table);status((ref?(rows.length?'Emissão localizada.':'Nenhuma emissão encontrada com essa referência.'):'Últimos 200 registros.')+' Localização informada pelo navegador; não representa um trajeto ou prova de presença.');
 });
 CenterAccess.ready.then(async me=>{if(!me)return;status('Conectado como '+(me.name||me.email||me.id));try{if(me.roles.some(r=>r==='admin'||r==='editor'))await loadPosts();}catch(e){status(e.message);}});
-
-async function loadMarketplace(){
- const c=await CenterAccess.request('mercadolivre/status');
- el('meli-status').textContent=(c.connected?'Conta conectada. ':c.configured?'Aplicativo configurado. ':'Aplicativo ainda não configurado. ')+(c.message||'')+(c.updatedAt?' Última atualização: '+new Date(c.updatedAt).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+'. '+c.count+' produtos.':'');
- el('meli-callback').textContent=c.callback;
- el('meli-client').value=c.clientId||'';el('meli-seller').value=c.sellerId||'';
-}
-el('meli-save').onclick=()=>run(async()=>{
- await CenterAccess.request('mercadolivre/config',{method:'POST',body:JSON.stringify({clientId:el('meli-client').value.trim(),clientSecret:el('meli-secret').value.trim(),sellerId:el('meli-seller').value.trim()})});
- el('meli-secret').value='';await loadMarketplace();
-});
-el('meli-connect').onclick=()=>run(async()=>{const result=await CenterAccess.request('mercadolivre/connect',{method:'POST'});window.location.assign(result.url);});
-el('meli-refresh').onclick=()=>run(loadMarketplace);
-CenterAccess.ready.then(async me=>{if(me?.roles.includes('admin'))try{await loadMarketplace();}catch(e){el('meli-status').textContent=e.message;}});
-CenterAccess.ready.then(me=>{if(me?.roles.includes('admin')&&location.hash==='#mercado-livre')el('mercado-livre').scrollIntoView({block:'start'});});

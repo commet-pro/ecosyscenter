@@ -68,7 +68,7 @@ export function marketplace({store,env,request=fetch,now=()=>new Date()}) {
         await put('credentials',seal(await exchange(c,{grant_type:'authorization_code',code,redirect_uri:callback,code_verifier:s.verifier})));
         await put('status',{connected:true,message:'Conta conectada. A importação ocorre automaticamente em até 15 minutos.'});
       }finally{await release(lock);}
-      return new Response(null,{status:303,headers:{Location:origin+'/marketing/assistente/?mercadolivre=connected','Cache-Control':'no-store','Referrer-Policy':'no-referrer','Set-Cookie':'center_meli=; Path=/integrations/mercadolivre/callback; HttpOnly; Secure; SameSite=Lax; Max-Age=0'}});
+      return new Response(null,{status:303,headers:{Location:origin+'/marketing/mercado-livre/?mercadolivre=connected','Cache-Control':'no-store','Referrer-Policy':'no-referrer','Set-Cookie':'center_meli=; Path=/integrations/mercadolivre/callback; HttpOnly; Secure; SameSite=Lax; Max-Age=0'}});
     }catch(e){return reply(400,{error:e.message});}
   }
   function mapItem(item){
